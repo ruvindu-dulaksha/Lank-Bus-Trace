@@ -1,0 +1,56 @@
+{
+  "routes": [
+    {
+      "routeNumber": "R001",
+      "routeName": "Colombo - Kandy Express",
+      "origin": {
+        "city": "Colombo",
+        "terminal": "Bastian Mawatha Bus Terminal",
+        "coordinates": { "latitude": 6.9271, "longitude": 79.8612 }
+      },
+      "destination": {
+        "city": "Kandy",
+        "terminal": "Kandy Central Bus Terminal",
+        "coordinates": { "latitude": 7.2906, "longitude": 80.6337 }
+      },
+      "distance": 115.5,
+      "estimatedDuration": 180,
+      "fareStructure": { "baseFare": 250, "currency": "LKR" }
+    },
+    {
+      "routeNumber": "R002", 
+      "routeName": "Colombo - Galle Coastal",
+      "origin": {
+        "city": "Colombo",
+        "terminal": "Pettah Bus Terminal",
+        "coordinates": { "latitude": 6.9319, "longitude": 79.8478 }
+      },
+      "destination": {
+        "city": "Galle",
+        "terminal": "Galle Bus Terminal",
+        "coordinates": { "latitude": 6.0535, "longitude": 80.2210 }
+      },
+      "distance": 119.0,
+      "estimatedDuration": 150,
+      "fareStructure": { "baseFare": 200, "currency": "LKR" }
+    }
+  ],
+  "buses": [
+    {
+      "registrationNumber": "NB-1234",
+      "busNumber": "B001",
+      "operatorInfo": {
+        "operatorName": "SLTB Colombo",
+        "contactNumber": "+94771234567"
+      },
+      "vehicleDetails": {
+        "make": "Tata",
+        "model": "LP 1118",
+        "year": 2020
+      },
+      "capacity": { "seated": 52, "standing": 20 },
+      "busType": "semi-luxury",
+      "features": ["AC", "WiFi", "USB Charging", "GPS"]
+    }
+  ]
+}
