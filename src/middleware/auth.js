@@ -156,7 +156,8 @@ export const authorizeOperator = (resourceType) => {
       const resourceId = req.params.id || req.params.routeId || req.params.busId;
       
       if (!resourceId) {
-        return next(); // Let the route handler validate the resource
+        return next(); 
+        // Let the route handler validate the resource
       }
 
       // Check if operator has access to the specific resource

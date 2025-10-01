@@ -25,3 +25,6 @@ dist-ssr
 
 # Environment files
 .env
+
+# Sensitive data files
+src/data/extended-sample-data.json
