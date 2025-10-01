@@ -273,9 +273,11 @@ export const getBusLocationHistory = asyncHandler(async (req, res) => {
  */
 export const getBusesByRoute = asyncHandler(async (req, res) => {
   const buses = await Bus.find({
-    assignedRoutes: req.params.routeId,
+    'assignedRoutes.routeId': req.params.routeId,
+    'assignedRoutes.isActive': true,
     operationalStatus: 'active'
   })
+  .populate('assignedRoutes.routeId', 'routeName routeNumber')
   .populate('currentTrip', 'tripNumber status schedule')
   .sort({ busNumber: 1 });
 

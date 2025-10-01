@@ -96,7 +96,7 @@ app.use('/api/locations', locationRoutes);
 // API Info endpoint
 app.get('/api', (req, res) => {
   res.json({
-    name: 'National Transport Commission Bus Tracking API',
+    name: 'Lanka Bus Trace API',
     version: '1.0.0',
     description: 'Real-time bus tracking system for inter-provincial services in Sri Lanka',
     endpoints: {
