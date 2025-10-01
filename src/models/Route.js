@@ -277,6 +277,30 @@ routeSchema.methods.getEstimatedArrivalAtStop = function(stopName, departureTime
   return arrivalTime;
 };
 
+// Static method to find routes between cities
+routeSchema.statics.findRoutesBetween = function(fromCity, toCity) {
+  const fromRegex = new RegExp(fromCity.trim(), 'i');
+  const toRegex = new RegExp(toCity.trim(), 'i');
+  
+  return this.find({
+    $and: [
+      {
+        $or: [
+          { 'origin.city': fromRegex },
+          { 'stops.stopName': fromRegex }
+        ]
+      },
+      {
+        $or: [
+          { 'destination.city': toRegex },
+          { 'stops.stopName': toRegex }
+        ]
+      }
+    ],
+    isActive: true
+  });
+};
+
 const Route = mongoose.model('Route', routeSchema);
 
 export default Route;

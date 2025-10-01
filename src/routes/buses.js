@@ -14,6 +14,7 @@ import { authenticate, authorize, authorizeOperator } from '../middleware/auth.j
 import { 
   validateBusCreate,
   validateCoordinates,
+  validateLocationSearch,
   validatePagination 
 } from '../middleware/validation.js';
 
@@ -113,7 +114,7 @@ router.get('/', validatePagination, getAllBuses);
  *       200:
  *         description: List of nearby buses
  */
-router.get('/nearby', validateCoordinates, getNearbyBuses);
+router.get('/nearby', validateLocationSearch, getNearbyBuses);
 
 /**
  * @swagger

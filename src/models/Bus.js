@@ -144,7 +144,23 @@ const busSchema = new mongoose.Schema({
     default: ['GPS', 'Fire Extinguisher', 'First Aid Kit']
   },
   currentLocation: {
-    coordinates: coordinatesSchema,
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number],
+      required: true,
+      validate: {
+        validator: function(coordinates) {
+          return coordinates.length === 2 && 
+                 coordinates[0] >= -180 && coordinates[0] <= 180 && // longitude
+                 coordinates[1] >= -90 && coordinates[1] <= 90;     // latitude
+        },
+        message: 'Coordinates must be [longitude, latitude] within valid ranges'
+      }
+    },
     address: {
       type: String,
       trim: true
@@ -291,7 +307,7 @@ busSchema.index({ registrationNumber: 1 });
 busSchema.index({ busNumber: 1 });
 busSchema.index({ 'operatorInfo.operatorId': 1 });
 busSchema.index({ operationalStatus: 1 });
-busSchema.index({ 'currentLocation.coordinates': '2dsphere' });
+busSchema.index({ currentLocation: '2dsphere' });
 busSchema.index({ 'assignedRoutes.routeId': 1, 'assignedRoutes.isActive': 1 });
 busSchema.index({ 'currentTrip.tripId': 1 });
 
@@ -346,7 +362,8 @@ busSchema.statics.findAvailableBuses = function() {
 // Instance method to update location
 busSchema.methods.updateLocation = function(latitude, longitude, speed = 0, heading = 0, accuracy = 10) {
   this.currentLocation = {
-    coordinates: { latitude, longitude, accuracy },
+    type: 'Point',
+    coordinates: [longitude, latitude], // GeoJSON format: [longitude, latitude]
     speed,
     heading,
     lastUpdated: new Date(),
