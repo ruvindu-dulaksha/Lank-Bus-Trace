@@ -37,6 +37,7 @@ src/data/extended-sample-data.json
 
 # Credentials and secrets (if accidentally created)
 DEVELOPMENT_CREDENTIALS.md
+backend-structure.md
 *credentials*
 *secrets*
 *password*
