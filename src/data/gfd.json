@@ -572,7 +572,7 @@
     {
       "username": "admin",
       "email": "admin@ntc.gov.lk",
-      "password": "admin123456",
+      "password": "temp_password_123",
       "role": "admin",
       "profile": {
         "firstName": "System",
@@ -583,7 +583,7 @@
     {
       "username": "operator1",
       "email": "operator1@sltb.lk",
-      "password": "operator123",
+      "password": "temp_password_456",
       "role": "operator",
       "profile": {
         "firstName": "Nimal",
@@ -599,7 +599,7 @@
     {
       "username": "operator2",
       "email": "operator2@cts.lk",
-      "password": "operator456",
+      "password": "temp_password_789",
       "role": "operator",
       "profile": {
         "firstName": "Kamala",

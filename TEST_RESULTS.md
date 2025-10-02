@@ -21,7 +21,7 @@
 ### ✅ **Issue #3: Authentication** - **RESOLVED**
 - **Previous Error**: Sample credentials failing 
 - **Fix Applied**: Created test users with proper bcrypt hashing
-- **Test Result**: ✅ **WORKING** - operator_test/operator123 + admin_ntc/admin123
+- **Test Result**: ✅ **WORKING** - Test credentials functional (see DEVELOPMENT_CREDENTIALS.md)
 
 ### ✅ **Issue #4: Bus Route Assignment** - **RESOLVED**
 - **Previous Error**: Schema casting error in route assignment query
@@ -31,7 +31,7 @@
 ### ✅ **Issue #5: Admin Authentication** - **RESOLVED**
 - **Previous Error**: admin_ntc login failing with invalid credentials
 - **Fix Applied**: Reset admin password with proper bcrypt hashing
-- **Test Result**: ✅ **WORKING** - admin_ntc/admin123 login successful
+- **Test Result**: ✅ **WORKING** - Admin authentication functional
 
 ### ✅ **Issue #6: Empty Location Data** - **RESOLVED**
 - **Previous Error**: 0 location records in database
@@ -51,7 +51,7 @@
 ### 2. **Authentication System** 
 | Endpoint | Status | Test Credentials | Notes |
 |----------|--------|------------------|-------|
-| `POST /api/auth/login` | ✅ **WORKING** | admin_ntc/admin123 **FIXED** ⭐ | **All user roles working** |
+| `POST /api/auth/login` | ✅ **WORKING** | Admin authentication **FIXED** ⭐ | **All user roles working** |
 | `POST /api/auth/register` | ✅ **WORKING** | New user creation | Full validation working |
 | Protected Endpoints | ✅ **WORKING** | Requires Bearer token | 401 without token ✅ |
 
@@ -127,7 +127,7 @@ Previously identified minor issues have been completely resolved:
 
 ### ✅ **Admin Authentication** - **FIXED**  
 - **Solution**: Reset admin password with proper bcrypt encryption
-- **Status**: admin_ntc/admin123 login working perfectly
+- **Status**: Admin authentication working perfectly
 - **Result**: Full admin access restored for complete API testing
 
 ### ✅ **Location Data Collection** - **FIXED**
