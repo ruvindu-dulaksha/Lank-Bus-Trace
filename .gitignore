@@ -25,9 +25,21 @@ dist-ssr
 
 # Environment files
 .env
+.env.local
+.env.production
+.env.staging
 
 # Scripts folder (contains sensitive utilities)
 scripts/
 
 # Sensitive data files
 src/data/extended-sample-data.json
+
+# Credentials and secrets (if accidentally created)
+*credentials*
+*secrets*
+*password*
+*keys*
+*.pem
+*.key
+*.crt

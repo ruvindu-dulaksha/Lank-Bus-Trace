@@ -57,7 +57,7 @@ cp .env.example .env
 # Import sample data (optional)
 node scripts/import-simulation-data.js
 
-# Create test users
+# Create test users (see documentation for credentials)
 node scripts/create-test-users.js
 
 # Start the server
@@ -66,10 +66,12 @@ npm start
 
 ### Test Credentials
 ```
-Admin:    admin_ntc / admin123
-Operator: operator_test / operator123  
-User:     user_test / user123
+Admin:    [See deployment documentation for credentials]
+Operator: [See deployment documentation for credentials]  
+User:     [See deployment documentation for credentials]
 ```
+
+**Note**: Test user credentials are provided separately in deployment documentation for security.
 
 ---
 
@@ -101,16 +103,18 @@ See `TEST_RESULTS.md` for comprehensive testing report showing 100% functionalit
 # Login and get token
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"emailOrUsername": "admin_ntc", "password": "admin123"}'
+  -d '{"emailOrUsername": "your_username", "password": "your_password"}'
 
 # Search routes between cities
-curl -H "Authorization: Bearer <token>" \
+curl -H "Authorization: Bearer <your_jwt_token>" \
   "http://localhost:3000/api/routes/search?from=Colombo&to=Kandy"
 
 # Find nearby buses  
-curl -H "Authorization: Bearer <token>" \
+curl -H "Authorization: Bearer <your_jwt_token>" \
   "http://localhost:3000/api/buses/nearby?latitude=6.9271&longitude=79.8612&radius=5"
 ```
+
+**Note**: Replace `your_username`, `your_password`, and `<your_jwt_token>` with actual credentials.
 
 ---
 
@@ -127,11 +131,13 @@ curl -H "Authorization: Bearer <token>" \
 ```env
 NODE_ENV=production
 PORT=3000
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/bus_trace_db
-JWT_SECRET=your_super_secure_secret_key
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database_name
+JWT_SECRET=your_secure_random_secret_key_here
 JWT_EXPIRE=24h
 BCRYPT_SALT_ROUNDS=12
 ```
+
+**Security Note**: Always use strong, unique values for JWT_SECRET and database credentials in production.
 
 ---
 
@@ -205,6 +211,19 @@ BCRYPT_SALT_ROUNDS=12
 
 **Built for Sri Lankan Public Transportation | NTC Bus Tracking System** 🇱🇰
 
+---
+
+## ⚠️ SECURITY NOTICE
+
+**This repository contains development/demo code. Before production deployment:**
+- Change ALL default credentials
+- Generate new JWT secrets  
+- Create production database with new credentials
+- Review `DEVELOPMENT_CREDENTIALS.md` for security checklist
+- Follow deployment security best practices
+
+**Never use development credentials in production!**
+
 ## 📚 API Documentation
 
 Visit `http://localhost:3000/api-docs` for interactive Swagger documentation.
@@ -225,9 +244,20 @@ Visit `http://localhost:3000/api-docs` for interactive Swagger documentation.
 ## 🌐 Deployment to AWS
 
 1. Use AWS EC2 + MongoDB Atlas
-2. Set environment variables
-3. Configure security groups
+2. Set environment variables securely
+3. Configure security groups and firewalls
 4. Deploy using PM2 or Docker
+5. **Important**: Change all default credentials before production deployment
+
+## 🔐 Security Recommendations
+
+- **Never commit sensitive data** to version control
+- **Use environment variables** for all credentials
+- **Enable HTTPS** in production
+- **Change default passwords** before deployment
+- **Use strong JWT secrets** (minimum 32 characters)
+- **Enable MongoDB authentication**
+- **Configure proper CORS** settings
 
 ## 📖 Main Endpoints
 
