@@ -36,6 +36,7 @@ scripts/
 src/data/extended-sample-data.json
 
 # Credentials and secrets (if accidentally created)
+DEVELOPMENT_CREDENTIALS.md
 *credentials*
 *secrets*
 *password*
