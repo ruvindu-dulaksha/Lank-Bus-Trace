@@ -26,5 +26,8 @@ dist-ssr
 # Environment files
 .env
 
+# Scripts folder (contains sensitive utilities)
+scripts/
+
 # Sensitive data files
 src/data/extended-sample-data.json
