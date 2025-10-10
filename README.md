@@ -131,7 +131,7 @@ curl -H "Authorization: Bearer <your_jwt_token>" \
 ```env
 NODE_ENV=production
 PORT=3000
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database_name
+MONGODB_URI=mongodb connection string
 JWT_SECRET=your_secure_random_secret_key_here
 JWT_EXPIRE=24h
 BCRYPT_SALT_ROUNDS=12

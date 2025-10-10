@@ -74,7 +74,7 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', validatePagination, getAllLocations);
+router.get('/', authenticate, validatePagination, getAllLocations);
 
 /**
  * @swagger
@@ -144,7 +144,7 @@ router.get('/', validatePagination, getAllLocations);
  *       400:
  *         description: Latitude and longitude are required
  */
-router.get('/nearby', validateCoordinates, getNearbyBuses);
+router.get('/nearby', authenticate, validateCoordinates, getNearbyBuses);
 
 /**
  * @swagger
@@ -213,7 +213,7 @@ router.get('/stats', authenticate, authorize('admin'), getLocationStats);
  *       200:
  *         description: Location history for the bus
  */
-router.get('/bus/:busId', getLocationsByBus);
+router.get('/bus/:busId', authenticate, getLocationsByBus);
 
 /**
  * @swagger
@@ -243,7 +243,7 @@ router.get('/bus/:busId', getLocationsByBus);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get('/:id', getLocation);
+router.get('/:id', authenticate, getLocation);
 
 /**
  * @swagger

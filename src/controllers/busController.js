@@ -321,3 +321,203 @@ export const getNearbyBuses = asyncHandler(async (req, res) => {
     count: buses.length
   });
 });
+
+// Alias for getNearbyBuses for backward compatibility
+export const findNearbyBuses = getNearbyBuses;
+
+/**
+ * @desc    Get real-time tracking data for a specific bus
+ * @route   GET /api/buses/live-tracking/:id
+ * @access  Private
+ */
+export const getLiveTracking = asyncHandler(async (req, res) => {
+  const bus = await Bus.findById(req.params.id)
+    .populate('currentTrip.tripId', 'tripNumber status route destination departureTime estimatedArrival')
+    .populate('assignedRoutes.routeId', 'routeNumber routeName origin destination');
+
+  if (!bus) {
+    throw new AppError('Bus not found', 404);
+  }
+
+  // Get recent location history (last 1 hour)
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const locationHistory = await Location.find({
+    busId: req.params.id,
+    timestamp: { $gte: oneHourAgo }
+  }).sort({ timestamp: -1 }).limit(20);
+
+  // Calculate real-time metrics
+  const isMoving = bus.currentLocation?.speed > 5;
+  const lastUpdate = bus.currentLocation?.lastUpdated;
+  const timeSinceLastUpdate = lastUpdate ? Date.now() - lastUpdate.getTime() : null;
+
+  res.status(200).json({
+    success: true,
+    data: {
+      bus: {
+        id: bus._id,
+        registrationNumber: bus.registrationNumber,
+        busNumber: bus.busNumber,
+        busType: bus.busType,
+        operationalStatus: bus.operationalStatus
+      },
+      currentLocation: bus.currentLocation,
+      currentTrip: bus.currentTrip,
+      assignedRoutes: bus.assignedRoutes,
+      metrics: {
+        isMoving,
+        lastUpdate,
+        timeSinceLastUpdate,
+        dataFreshness: timeSinceLastUpdate < 300000 ? 'fresh' : 'stale' // 5 minutes
+      },
+      locationHistory: locationHistory.map(loc => ({
+        coordinates: loc.coordinates,
+        timestamp: loc.timestamp,
+        speed: loc.speed,
+        heading: loc.heading
+      }))
+    }
+  });
+});
+
+/**
+ * @desc    Get fleet-wide status overview
+ * @route   GET /api/buses/fleet-status
+ * @access  Private (Admin/Operator)
+ */
+export const getFleetStatus = asyncHandler(async (req, res) => {
+  // Get overall fleet statistics
+  const [totalBuses, activeBuses, busesInMaintenance, busesWithActiveTrips] = await Promise.all([
+    Bus.countDocuments({ isActive: true }),
+    Bus.countDocuments({ operationalStatus: 'active', isActive: true }),
+    Bus.countDocuments({ operationalStatus: 'maintenance', isActive: true }),
+    Bus.countDocuments({ 'currentTrip.status': 'in-progress', isActive: true })
+  ]);
+
+  // Get buses by type
+  const busByType = await Bus.aggregate([
+    { $match: { isActive: true } },
+    { $group: { _id: '$busType', count: { $sum: 1 } } },
+    { $sort: { count: -1 } }
+  ]);
+
+  // Get location data freshness
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+  const busesWithRecentLocation = await Bus.countDocuments({
+    'currentLocation.lastUpdated': { $gte: fifteenMinutesAgo },
+    isActive: true
+  });
+
+  // Get province coverage
+  const provinceCoverage = await Bus.aggregate([
+    { $match: { isActive: true, operationalStatus: 'active' } },
+    { $lookup: {
+        from: 'routes',
+        localField: 'assignedRoutes.routeId',
+        foreignField: '_id',
+        as: 'routes'
+      }
+    },
+    { $unwind: '$routes' },
+    { $unwind: '$routes.provinces' },
+    { $group: { _id: '$routes.provinces', busCount: { $sum: 1 } } },
+    { $sort: { busCount: -1 } }
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      overview: {
+        totalBuses,
+        activeBuses,
+        busesInMaintenance,
+        busesWithActiveTrips,
+        utilizationRate: totalBuses > 0 ? Math.round((busesWithActiveTrips / totalBuses) * 100) : 0
+      },
+      byType: busByType,
+      dataQuality: {
+        busesWithRecentLocation,
+        locationDataFreshness: totalBuses > 0 ? Math.round((busesWithRecentLocation / totalBuses) * 100) : 0
+      },
+      provinceCoverage,
+      timestamp: new Date().toISOString()
+    }
+  });
+});
+
+/**
+ * @desc    Get bus coverage for a specific route
+ * @route   GET /api/buses/route-coverage/:routeId
+ * @access  Public
+ */
+export const getRouteCoverage = asyncHandler(async (req, res) => {
+  const { routeId } = req.params;
+
+  // Get route details
+  const route = await Route.findById(routeId);
+  if (!route) {
+    throw new AppError('Route not found', 404);
+  }
+
+  // Get buses assigned to this route
+  const assignedBuses = await Bus.find({
+    'assignedRoutes.routeId': routeId,
+    'assignedRoutes.isActive': true,
+    isActive: true
+  }).populate('currentTrip.tripId', 'status departureTime estimatedArrival');
+
+  // Get active trips on this route
+  const activeTrips = await Trip.find({
+    routeId,
+    status: { $in: ['scheduled', 'in_progress', 'boarding'] }
+  }).populate('busId', 'registrationNumber busNumber currentLocation');
+
+  // Calculate coverage metrics
+  const totalBuses = assignedBuses.length;
+  const activeBuses = assignedBuses.filter(bus => bus.operationalStatus === 'active').length;
+  const busesInService = assignedBuses.filter(bus => bus.currentTrip?.status === 'in-progress').length;
+
+  // Group buses by location along the route
+  const routeCoverage = assignedBuses.map(bus => {
+    const location = bus.currentLocation;
+    const trip = activeTrips.find(t => t.busId?._id.toString() === bus._id.toString());
+    
+    return {
+      busId: bus._id,
+      registrationNumber: bus.registrationNumber,
+      busNumber: bus.busNumber,
+      busType: bus.busType,
+      currentLocation: location,
+      currentTrip: trip ? {
+        tripId: trip._id,
+        status: trip.status,
+        departureTime: trip.departureTime,
+        estimatedArrival: trip.estimatedArrival
+      } : null,
+      operationalStatus: bus.operationalStatus
+    };
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      route: {
+        id: route._id,
+        routeNumber: route.routeNumber,
+        routeName: route.routeName,
+        origin: route.origin,
+        destination: route.destination,
+        distance: route.distance
+      },
+      coverage: {
+        totalBuses,
+        activeBuses,
+        busesInService,
+        coveragePercentage: totalBuses > 0 ? Math.round((busesInService / totalBuses) * 100) : 0
+      },
+      buses: routeCoverage,
+      activeTrips: activeTrips.length,
+      timestamp: new Date().toISOString()
+    }
+  });
+});

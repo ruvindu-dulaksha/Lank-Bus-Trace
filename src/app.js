@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import rateLimit from 'express-rate-limit';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
@@ -15,6 +14,7 @@ import logger from './config/logger.js';
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
+import { globalApiLimiter } from './middleware/rateLimiting.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -32,18 +32,6 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.',
-    retryAfter: '15 minutes'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -51,14 +39,43 @@ app.use(helmet({
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'Accept', 'Origin', 'X-Requested-With'],
+  exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'Link', 'ETag', 'Last-Modified']
 };
 app.use(cors(corsOptions));
 
-// Rate limiting
-app.use('/api', limiter);
+// Enhanced RESTful headers middleware
+app.use((req, res, next) => {
+  // API versioning header
+  res.set('API-Version', '1.0.0');
+  
+  // Service identification
+  res.set('X-Powered-By', 'Lanka Bus Trace API');
+  
+  // Request ID for tracking
+  const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  res.set('X-Request-ID', requestId);
+  
+  // Security headers for API
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'DENY');
+  res.set('X-XSS-Protection', '1; mode=block');
+  res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // API-specific headers for API routes
+  if (req.path.startsWith('/api/')) {
+    res.set('Content-Type', 'application/json; charset=utf-8');
+  }
+  
+  next();
+});
+
+// Global rate limiting for all API endpoints
+app.use('/api', globalApiLimiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -72,14 +89,14 @@ const specs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "NTC Bus Tracking API Documentation"
+  customSiteTitle: "Lanka Bus Trace API Documentation"
 }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
-    message: 'NTC Bus Tracking API is running',
+    message: 'Lanka Bus Trace API is running',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development'
@@ -109,7 +126,7 @@ app.get('/api', (req, res) => {
       locations: '/api/locations'
     },
     contact: {
-      organization: 'National Transport Commission - Sri Lanka',
+      organization: 'Lanka Bus Trace',
       website: 'https://www.ntc.gov.lk'
     }
   });

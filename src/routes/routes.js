@@ -8,13 +8,16 @@ import {
   searchRoutes,
   getRouteStops,
   getRoutesByProvince,
-  getRouteStats
+  getRouteStats,
+  getAvailableCities,
+  getPriceEstimate
 } from '../controllers/routeController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { 
   validateRouteCreate,
   validatePagination 
 } from '../middleware/validation.js';
+import { conditionalGET, setCacheControl } from '../middleware/conditionalGET.js';
 
 const router = express.Router();
 
@@ -80,7 +83,7 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', validatePagination, getAllRoutes);
+router.get('/', authenticate, validatePagination, setCacheControl(300), conditionalGET, getAllRoutes);
 
 /**
  * @swagger
@@ -133,7 +136,14 @@ router.get('/', validatePagination, getAllRoutes);
  *       400:
  *         description: Origin and destination are required
  */
-router.get('/search', searchRoutes);
+router.get('/search', authenticate, setCacheControl(60), searchRoutes); // Reduced cache to 1 minute
+
+// Cities endpoint (must come before /:id routes)
+router.get('/cities', authenticate, setCacheControl(600), conditionalGET, getAvailableCities);
+
+// Pricing endpoints (must come before /:id routes)  
+router.get('/pricing/:from/:to', authenticate, setCacheControl(300), getPriceEstimate);
+router.get('/estimate-price', authenticate, setCacheControl(300), getPriceEstimate);
 
 /**
  * @swagger
@@ -158,7 +168,7 @@ router.get('/search', searchRoutes);
  *       200:
  *         description: List of routes in the province
  */
-router.get('/province/:province', getRoutesByProvince);
+router.get('/province/:province', authenticate, getRoutesByProvince);
 
 /**
  * @swagger
@@ -201,7 +211,7 @@ router.get('/province/:province', getRoutesByProvince);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get('/:id', getRoute);
+router.get('/:id', authenticate, getRoute);
 
 /**
  * @swagger
@@ -220,7 +230,7 @@ router.get('/:id', getRoute);
  *       200:
  *         description: Route stops information
  */
-router.get('/:id/stops', getRouteStops);
+router.get('/:id/stops', authenticate, getRouteStops);
 
 /**
  * @swagger
@@ -239,7 +249,7 @@ router.get('/:id/stops', getRouteStops);
  *       200:
  *         description: Route statistics including buses, trips, and revenue
  */
-router.get('/:id/stats', getRouteStats);
+router.get('/:id/stats', authenticate, authorize('admin', 'operator'), getRouteStats);
 
 /**
  * @swagger

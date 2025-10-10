@@ -102,6 +102,48 @@ export const validateRegister = [
   handleValidationErrors
 ];
 
+// Password reset validations
+export const validateForgotPassword = [
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+  handleValidationErrors
+];
+
+export const validateResetPassword = [
+  body('token')
+    .notEmpty()
+    .withMessage('Reset token is required')
+    .trim()
+    .isLength({ min: 10 })
+    .withMessage('Reset token must be at least 10 characters'),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+  handleValidationErrors
+];
+
+export const validateChangePassword = [
+  body('currentPassword')
+    .notEmpty()
+    .withMessage('Current password is required'),
+  body('newPassword')
+    .isLength({ min: 6 })
+    .withMessage('New password must be at least 6 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number')
+    .custom((value, { req }) => {
+      if (value === req.body.currentPassword) {
+        throw new Error('New password must be different from current password');
+      }
+      return true;
+    }),
+  handleValidationErrors
+];
+
 // User profile validations
 export const validateUserProfile = [
   body('profile.firstName')
@@ -269,6 +311,20 @@ export const validateTripCreate = [
 ];
 
 // Search and filter validations
+export const validateNearbyQuery = [
+  query('latitude')
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('Latitude must be between -90 and 90'),
+  query('longitude')
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('Longitude must be between -180 and 180'),
+  query('radius')
+    .optional()
+    .isFloat({ min: 0, max: 50000 })
+    .withMessage('Radius must be between 0 and 50000 meters'),
+  handleValidationErrors
+];
+
 export const validateLocationSearch = [
   query('latitude')
     .isFloat({ min: -90, max: 90 })

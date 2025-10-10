@@ -91,11 +91,11 @@ const routeSchema = new mongoose.Schema({
     maxlength: [1000, 'Description cannot exceed 1000 characters']
   },
   origin: {
-    type: locationSchema,
+    type: mongoose.Schema.Types.Mixed,
     required: [true, 'Origin location is required']
   },
   destination: {
-    type: locationSchema,
+    type: mongoose.Schema.Types.Mixed,
     required: [true, 'Destination location is required']
   },
   stops: {
@@ -204,7 +204,13 @@ const routeSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
+  toJSON: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Ensure Mixed type fields are included in JSON
+      return ret;
+    }
+  },
   toObject: { virtuals: true }
 });
 
@@ -279,26 +285,28 @@ routeSchema.methods.getEstimatedArrivalAtStop = function(stopName, departureTime
 
 // Static method to find routes between cities
 routeSchema.statics.findRoutesBetween = function(fromCity, toCity) {
-  const fromRegex = new RegExp(fromCity.trim(), 'i');
-  const toRegex = new RegExp(toCity.trim(), 'i');
+  const fromRegex = new RegExp(`^${fromCity.trim()}$`, 'i'); // Exact match
+  const toRegex = new RegExp(`^${toCity.trim()}$`, 'i');     // Exact match
   
   return this.find({
-    $and: [
-      {
-        $or: [
-          { 'origin.city': fromRegex },
-          { 'stops.stopName': fromRegex }
+    $or: [
+      // Direct exact matches for origin and destination
+      { 
+        $and: [
+          { origin: fromRegex },
+          { destination: toRegex }
         ]
       },
-      {
-        $or: [
-          { 'destination.city': toRegex },
-          { 'stops.stopName': toRegex }
+      // Object format matches (if origin/destination are objects)
+      { 
+        $and: [
+          { 'origin.city': fromRegex },
+          { 'destination.city': toRegex }
         ]
       }
     ],
     isActive: true
-  });
+  }).lean();
 };
 
 const Route = mongoose.model('Route', routeSchema);

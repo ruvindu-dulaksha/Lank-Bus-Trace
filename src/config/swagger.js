@@ -2,13 +2,13 @@ export const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Lanka Trace API',
+      title: 'Lanka Bus Trace API',
       version: '1.0.0',
-      description: 'Real-time bus tracking system for inter-provincial services in Sri Lanka',
+      description: 'Real-time bus tracking system for inter-provincial services in Sri Lanka - Lanka Bus Trace API',
       contact: {
-        name: 'National Transport Commission',
-        url: 'https://www.ntc.gov.lk',
-        email: 'info@ntc.gov.lk'
+        name: 'Lanka Bus Trace',
+        url: 'https://www.lankabustrace.lk',
+        email: 'info@lankabustrace.lk'
       },
       license: {
         name: 'MIT',

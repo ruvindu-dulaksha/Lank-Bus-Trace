@@ -81,7 +81,7 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', validatePagination, getAllTrips);
+router.get('/', authenticate, validatePagination, getAllTrips);
 
 /**
  * @swagger
@@ -138,7 +138,7 @@ router.get('/stats', authenticate, authorize('admin'), getTripStats);
  *       200:
  *         description: List of trips for the route
  */
-router.get('/route/:routeId', getTripsByRoute);
+router.get('/route/:routeId', authenticate, getTripsByRoute);
 
 /**
  * @swagger
@@ -168,7 +168,7 @@ router.get('/route/:routeId', getTripsByRoute);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get('/:id', getTrip);
+router.get('/:id', authenticate, getTrip);
 
 /**
  * @swagger

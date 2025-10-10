@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -100,7 +101,15 @@ const userSchema = new mongoose.Schema({
     token: String,
     createdAt: { type: Date, default: Date.now },
     expiresAt: Date
-  }]
+  }],
+  passwordResetToken: {
+    type: String,
+    select: false
+  },
+  passwordResetExpires: {
+    type: Date,
+    select: false
+  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -217,6 +226,33 @@ userSchema.statics.cleanupExpiredTokens = function() {
     { 'refreshTokens.expiresAt': { $lt: new Date() } },
     { $pull: { refreshTokens: { expiresAt: { $lt: new Date() } } } }
   );
+};
+
+// Instance method to generate password reset token
+userSchema.methods.createPasswordResetToken = function() {
+  const resetToken = Math.random().toString(36).substring(2, 15) + 
+                     Math.random().toString(36).substring(2, 15);
+  
+  // Hash the token and save to database
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  
+  // Set expiration time (15 minutes)
+  this.passwordResetExpires = Date.now() + 15 * 60 * 1000;
+  
+  return resetToken;
+};
+
+// Instance method to reset password
+userSchema.methods.resetPassword = async function(newPassword) {
+  this.password = newPassword;
+  this.passwordResetToken = undefined;
+  this.passwordResetExpires = undefined;
+  this.loginAttempts = 0;
+  this.lockUntil = undefined;
+  await this.save();
 };
 
 const User = mongoose.model('User', userSchema);

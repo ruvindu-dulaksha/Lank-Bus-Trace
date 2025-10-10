@@ -28,9 +28,13 @@ dist-ssr
 .env.local
 .env.production
 .env.staging
+.env.production.local
 
 # Scripts folder (contains sensitive utilities)
 scripts/
+
+# Specific script files
+scripts/import-simulation-data.js
 
 # Sensitive data files
 src/data/extended-sample-data.json

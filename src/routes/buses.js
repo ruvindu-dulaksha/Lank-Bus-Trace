@@ -8,14 +8,19 @@ import {
   updateBusLocation,
   getBusLocationHistory,
   getBusesByRoute,
-  getNearbyBuses
+  getNearbyBuses,
+  getLiveTracking,
+  getFleetStatus,
+  getRouteCoverage,
+  findNearbyBuses
 } from '../controllers/busController.js';
 import { authenticate, authorize, authorizeOperator } from '../middleware/auth.js';
 import { 
   validateBusCreate,
   validateCoordinates,
   validateLocationSearch,
-  validatePagination 
+  validatePagination,
+  validateNearbyQuery
 } from '../middleware/validation.js';
 
 const router = express.Router();
@@ -83,7 +88,7 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', validatePagination, getAllBuses);
+router.get('/', authenticate, validatePagination, getAllBuses);
 
 /**
  * @swagger
@@ -114,7 +119,61 @@ router.get('/', validatePagination, getAllBuses);
  *       200:
  *         description: List of nearby buses
  */
-router.get('/nearby', validateLocationSearch, getNearbyBuses);
+router.get('/nearby', authenticate, validateNearbyQuery, findNearbyBuses);
+
+/**
+ * @swagger
+ * /api/buses/live-tracking/{id}:
+ *   get:
+ *     summary: Get real-time tracking data for a bus
+ *     tags: [Buses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bus ID
+ *     responses:
+ *       200:
+ *         description: Real-time tracking data
+ */
+router.get('/live-tracking/:id', authenticate, getLiveTracking);
+
+/**
+ * @swagger
+ * /api/buses/fleet-status:
+ *   get:
+ *     summary: Get fleet-wide status overview
+ *     tags: [Buses]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Fleet status overview
+ */
+router.get('/fleet-status', authenticate, authorize('admin', 'operator'), getFleetStatus);
+
+/**
+ * @swagger
+ * /api/buses/route-coverage/{routeId}:
+ *   get:
+ *     summary: Get bus coverage for a specific route
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: path
+ *         name: routeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Route ID
+ *     responses:
+ *       200:
+ *         description: Route coverage data
+ */
+router.get('/route-coverage/:routeId', authenticate, getRouteCoverage);
 
 /**
  * @swagger
@@ -133,7 +192,7 @@ router.get('/nearby', validateLocationSearch, getNearbyBuses);
  *       200:
  *         description: List of buses assigned to the route
  */
-router.get('/route/:routeId', getBusesByRoute);
+router.get('/route/:routeId', authenticate, getBusesByRoute);
 
 /**
  * @swagger
@@ -163,7 +222,7 @@ router.get('/route/:routeId', getBusesByRoute);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get('/:id', getBus);
+router.get('/:id', authenticate, getBus);
 
 /**
  * @swagger
@@ -344,6 +403,6 @@ router.post('/:id/location', authenticate, authorize('admin', 'operator'), autho
  *       200:
  *         description: Bus location history
  */
-router.get('/:id/location-history', getBusLocationHistory);
+router.get('/:id/location-history', authenticate, getBusLocationHistory);
 
 export default router;
