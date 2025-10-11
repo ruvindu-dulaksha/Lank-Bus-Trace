@@ -153,7 +153,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "Lanka Bus Trace API Documentation",
   swaggerOptions: {
-    url: '/api-docs.json'
+    url: '/api-docs.json',
+    requestInterceptor: (req) => {
+      // Ensure all requests go through proper CORS handling
+      req.headers['Accept'] = 'application/json';
+      req.headers['Content-Type'] = 'application/json';
+      return req;
+    }
   }
 }));
 
