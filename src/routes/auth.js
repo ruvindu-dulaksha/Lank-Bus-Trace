@@ -7,7 +7,9 @@ import {
   resetPassword, 
   changePassword,
   logout,
-  refreshToken
+  refreshToken,
+  getBlacklistStats,
+  clearBlacklist
 } from '../controllers/authController.js';
 import {
   getCurrentUser,
@@ -402,5 +404,77 @@ router.get('/me', authenticate, getCurrentUser);
  *         description: Authentication required
  */
 router.put('/profile', authenticate, updateProfile);
+
+/**
+ * @swagger
+ * /auth/blacklist-stats:
+ *   get:
+ *     summary: Get token blacklist statistics (Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Get statistics about blacklisted tokens for monitoring purposes
+ *     responses:
+ *       200:
+ *         description: Blacklist statistics retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalBlacklistedTokens:
+ *                       type: number
+ *                     lastCleanup:
+ *                       type: string
+ *                       format: date-time
+ *                     memoryUsage:
+ *                       type: object
+ *       403:
+ *         description: Admin access required
+ *       401:
+ *         description: Authentication required
+ */
+router.get('/blacklist-stats', authenticate, getBlacklistStats);
+
+/**
+ * @swagger
+ * /auth/clear-blacklist:
+ *   post:
+ *     summary: Clear token blacklist (Admin only - Emergency use)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Clear all blacklisted tokens - use only in emergency situations
+ *     responses:
+ *       200:
+ *         description: Blacklist cleared successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     clearedTokens:
+ *                       type: number
+ *                     clearedBy:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *       403:
+ *         description: Admin access required
+ *       401:
+ *         description: Authentication required
+ */
+router.post('/clear-blacklist', authenticate, clearBlacklist);
 
 export default router;

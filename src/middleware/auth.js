@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import logger from '../config/logger.js';
+import tokenBlacklistService from '../services/tokenBlacklistService.js';
 
 // JWT Authentication Middleware
 export const authenticateJWT = async (req, res, next) => {
@@ -21,6 +22,15 @@ export const authenticateJWT = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'Access token required. Please provide a valid Bearer token in the Authorization header or login cookie.'
+      });
+    }
+
+    // Check if token is blacklisted (logged out)
+    if (tokenBlacklistService.isTokenBlacklisted(token)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token has been invalidated. Please log in again.',
+        code: 'TOKEN_BLACKLISTED'
       });
     }
 

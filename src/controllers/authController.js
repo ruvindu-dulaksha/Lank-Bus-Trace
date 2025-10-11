@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import logger from '../config/logger.js';
 import emailService from '../services/emailService.js';
+import tokenBlacklistService from '../services/tokenBlacklistService.js';
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -288,6 +289,35 @@ export const changePassword = asyncHandler(async (req, res) => {
 export const logout = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
 
+  // Get token from cookie or Authorization header
+  const cookieToken = req.cookies?.token;
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader && authHeader.startsWith('Bearer ') 
+    ? authHeader.substring(7) 
+    : null;
+  
+  const currentToken = cookieToken || bearerToken;
+
+  if (currentToken) {
+    try {
+      // Decode token to get expiration time
+      const decoded = jwt.decode(currentToken);
+      
+      if (decoded && decoded.exp) {
+        // Add token to blacklist
+        tokenBlacklistService.blacklistToken(currentToken, decoded.exp);
+        
+        logger.info(`Token blacklisted on logout: ${req.user.username}`, {
+          userId: req.user._id,
+          tokenExpiry: new Date(decoded.exp * 1000).toISOString()
+        });
+      }
+    } catch (error) {
+      logger.error('Error blacklisting token on logout:', error);
+      // Continue with logout even if blacklisting fails
+    }
+  }
+
   // Remove the specific refresh token if provided
   if (refreshToken) {
     await User.findByIdAndUpdate(
@@ -311,7 +341,8 @@ export const logout = asyncHandler(async (req, res) => {
     sameSite: 'lax'
   }).status(200).json({
     success: true,
-    message: 'Logged out successfully'
+    message: 'Logged out successfully',
+    tokenInvalidated: !!currentToken
   });
 });
 
@@ -391,4 +422,65 @@ export const refreshToken = asyncHandler(async (req, res) => {
       message: 'Invalid or expired refresh token'
     });
   }
+});
+
+/**
+ * @desc    Get token blacklist statistics (Admin only)
+ * @route   GET /api/auth/blacklist-stats
+ * @access  Private (Admin only)
+ */
+export const getBlacklistStats = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin access required'
+    });
+  }
+
+  const stats = tokenBlacklistService.getStats();
+  
+  res.json({
+    success: true,
+    message: 'Token blacklist statistics retrieved',
+    data: {
+      ...stats,
+      currentUser: {
+        id: req.user._id,
+        username: req.user.username,
+        role: req.user.role
+      }
+    }
+  });
+});
+
+/**
+ * @desc    Clear token blacklist (Admin only - Emergency use)
+ * @route   POST /api/auth/clear-blacklist
+ * @access  Private (Admin only)
+ */
+export const clearBlacklist = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin access required'
+    });
+  }
+
+  const clearedCount = tokenBlacklistService.clearAll();
+  
+  logger.warn(`Token blacklist cleared by admin: ${req.user.username}`, {
+    adminId: req.user._id,
+    clearedTokens: clearedCount,
+    timestamp: new Date().toISOString()
+  });
+
+  res.json({
+    success: true,
+    message: 'Token blacklist cleared successfully',
+    data: {
+      clearedTokens: clearedCount,
+      clearedBy: req.user.username,
+      timestamp: new Date().toISOString()
+    }
+  });
 });
