@@ -7,6 +7,11 @@ export const swaggerOptions = {
       description: `
 ## Smart Inter-Provincial Bus Tracking System for Sri Lanka
 
+**Developer**: K.D.R. Dulaksha | **Student ID**: COBSCCOMP4Y241P-018
+
+### Project Overview:
+Academic project for advanced software development coursework, demonstrating real-time bus tracking system for Sri Lanka's National Transport Commission (NTC).
+
 ### Features:
 - 🚌 **Smart Journey Planning**: Find buses for your actual travel route (not just nearby buses)
 - 🔐 **Dual Authentication**: JWT tokens and HTTP-only cookies support
@@ -20,6 +25,9 @@ export const swaggerOptions = {
 - Government-approved inter-provincial bus monitoring
 - Standardized route and pricing information
 
+### Academic Demonstration:
+This API demonstrates full-stack development capabilities including RESTful design, authentication, database optimization, and production deployment practices.
+
 ### Quick Start:
 1. **Login**: Use \`POST /auth/login\` with test credentials
 2. **Journey Planning**: Use \`GET /live-search?from=Colombo&to=Kandy\`
@@ -27,9 +35,9 @@ export const swaggerOptions = {
 4. **Search**: Use \`GET /search?q=Colombo&type=route\`
       `,
       contact: {
-        name: 'Lanka Bus Trace',
-        url: 'https://www.lankabustrace.lk',
-        email: 'info@lankabustrace.lk'
+        name: 'K.D.R. Dulaksha (COBSCCOMP241P-018)',
+        url: 'https://github.com/ruvindu-dulaksha',
+        email: 'dulaksha.student@example.com'
       },
       license: {
         name: 'MIT',
