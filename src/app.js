@@ -103,11 +103,20 @@ app.use(morgan('combined', { stream: { write: message => logger.info(message.tri
 // Swagger Documentation
 const specs = swaggerJsdoc(swaggerOptions);
 
+// Swagger JSON specification endpoint
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(specs);
+});
+
 // Swagger UI at /api-docs (main documentation interface)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "Lanka Bus Trace API Documentation"
+  customSiteTitle: "Lanka Bus Trace API Documentation",
+  swaggerOptions: {
+    url: '/api-docs.json'
+  }
 }));
 
 // API Documentation info endpoint (for testing purposes)
