@@ -1,6 +1,7 @@
 import Route from '../models/Route.js';
 import Bus from '../models/Bus.js';
 import Trip from '../models/Trip.js';
+import PricingRule from '../models/PricingRule.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import logger from '../config/logger.js';
@@ -207,6 +208,10 @@ export const searchRoutes = asyncHandler(async (req, res) => {
     to, 
     date, 
     passengers = 1, 
+    adults = 1,        // Number of adult passengers
+    children = 0,      // Number of child passengers
+    passengerAge,      // Legacy single passenger age
+    ticketType,        // 'adult' or 'child'
     departureTime, 
     busType,
     sortBy = 'price',
@@ -218,9 +223,27 @@ export const searchRoutes = asyncHandler(async (req, res) => {
   const searchOrigin = origin || from;
   const searchDestination = destination || to;
 
+  // Parse passenger numbers
+  const numAdults = parseInt(adults) || 1;
+  const numChildren = parseInt(children) || 0;
+  const totalPassengers = numAdults + numChildren;
+
   // Validate required parameters
   if (!searchOrigin || !searchDestination) {
     throw new AppError('Origin and destination are required', 400);
+  }
+
+  // Validate passenger numbers
+  if (numAdults < 0 || numChildren < 0) {
+    throw new AppError('Number of adults and children must be non-negative', 400);
+  }
+
+  if (totalPassengers === 0) {
+    throw new AppError('At least one passenger is required', 400);
+  }
+
+  if (totalPassengers > 50) {
+    throw new AppError('Maximum 50 passengers allowed per search', 400);
   }
 
   // Find routes between the specified cities
@@ -239,9 +262,23 @@ export const searchRoutes = asyncHandler(async (req, res) => {
       origin: searchOrigin,
       destination: searchDestination,
       date: date || 'today',
-      passengers: parseInt(passengers),
+      passengers: {
+        adults: numAdults,
+        children: numChildren,
+        total: totalPassengers
+      },
       departureTime,
       busType
+    },
+    pricing: {
+      adultPrice: null,     // Will be calculated per route
+      childPrice: null,     // Will be calculated per route
+      totalPrice: null,     // Total for all passengers
+      breakdown: {
+        adults: { count: numAdults, unitPrice: null, total: null },
+        children: { count: numChildren, unitPrice: null, total: null }
+      },
+      savings: 0            // Total savings from children's discount
     },
     routes: [],
     summary: {
@@ -275,7 +312,7 @@ export const searchRoutes = asyncHandler(async (req, res) => {
       .sort({ 'schedule.plannedDeparture': 1 });
 
     // Calculate enhanced trip information with pricing
-    const enhancedTrips = trips.map(trip => {
+    const enhancedTrips = await Promise.all(trips.map(async trip => {
       const bus = trip.busId;
       const route = trip.routeId;
       
@@ -310,7 +347,59 @@ export const searchRoutes = asyncHandler(async (req, res) => {
       if (isHoliday) surcharges += 20; // Fixed holiday surcharge
 
       const finalFarePerPerson = Math.round(totalFare + surcharges);
-      const totalForAllPassengers = finalFarePerPerson * parseInt(passengers);
+
+      // Calculate pricing for multiple passengers (adults and children)
+      let totalPriceAllPassengers = 0;
+      let totalSavings = 0;
+      let adultFare = finalFarePerPerson;
+      let childFare = finalFarePerPerson;
+      
+      // Calculate adult pricing (no discount)
+      if (numAdults > 0) {
+        totalPriceAllPassengers += adultFare * numAdults;
+      }
+      
+      // Calculate child pricing (50% discount)
+      if (numChildren > 0) {
+        try {
+          // Use PricingRule model to calculate child pricing (assuming 12 years old for children)
+          const childPricingResult = await PricingRule.calculatePrice(finalFarePerPerson, 12);
+          if (childPricingResult.success) {
+            childFare = childPricingResult.data.finalPrice;
+            const savingsPerChild = finalFarePerPerson - childFare;
+            totalSavings = savingsPerChild * numChildren;
+          } else {
+            // If no discount rules, children pay same as adults
+            childFare = finalFarePerPerson;
+          }
+        } catch (error) {
+          // If pricing calculation fails, children pay same as adults
+          console.warn('Child pricing calculation failed, using standard pricing:', error.message);
+          childFare = finalFarePerPerson;
+        }
+        
+        totalPriceAllPassengers += childFare * numChildren;
+      }
+
+      // Legacy support - if single passenger age is provided, use that instead
+      if (passengerAge !== undefined && totalPassengers === 1) {
+        try {
+          const pricingResult = await PricingRule.calculatePrice(finalFarePerPerson, parseInt(passengerAge));
+          if (pricingResult.success) {
+            totalPriceAllPassengers = pricingResult.data.finalPrice;
+            totalSavings = pricingResult.data.savings;
+            if (parseInt(passengerAge) <= 16) {
+              childFare = pricingResult.data.finalPrice;
+              numChildren = 1;
+              numAdults = 0;
+            } else {
+              adultFare = pricingResult.data.finalPrice;
+            }
+          }
+        } catch (error) {
+          console.warn('Legacy age-based pricing calculation failed:', error.message);
+        }
+      }
 
       return {
         tripId: trip._id,
@@ -340,25 +429,34 @@ export const searchRoutes = asyncHandler(async (req, res) => {
           occupancyRate: Math.round(((trip.passengerInfo?.currentCount || 0) / (trip.capacity?.totalSeats || 45)) * 100)
         },
         pricing: {
-          farePerPerson: finalFarePerPerson,
-          totalForPassengers: totalForAllPassengers,
+          standardFare: finalFarePerPerson,
+          adults: {
+            count: numAdults,
+            farePerPerson: adultFare,
+            total: adultFare * numAdults
+          },
+          children: {
+            count: numChildren,
+            farePerPerson: childFare,
+            total: childFare * numChildren,
+            discount: childFare < finalFarePerPerson ? `${Math.round(((finalFarePerPerson - childFare) / finalFarePerPerson) * 100)}%` : '0%'
+          },
+          totalPrice: totalPriceAllPassengers,
+          totalSavings: totalSavings,
+          pricePerPassenger: Math.round(totalPriceAllPassengers / totalPassengers),
+          breakdown: `${numAdults} adult${numAdults !== 1 ? 's' : ''} + ${numChildren} child${numChildren !== 1 ? 'ren' : ''}`,
           currency: 'LKR',
-          breakdown: {
+          priceBreakdown: {
             baseFare: Math.round(baseFare),
             distanceFare: route.fareStructure?.farePerKm ? Math.round(route.distance * route.fareStructure.farePerKm) : 0,
             busTypeMultiplier: multiplier,
             surcharges: Math.round(surcharges),
-            subtotal: Math.round(totalFare)
+            finalBasePrice: finalFarePerPerson
           }
-        },
-        bookingInfo: {
-          isBookable: trip.status === 'scheduled' && (trip.capacity?.totalSeats - (trip.passengerInfo?.currentCount || 0)) > 0,
-          advanceBookingDays: 30,
-          cancellationPolicy: 'Free cancellation up to 2 hours before departure'
         },
         status: trip.status
       };
-    });
+    }));
 
     // Filter trips based on criteria
     let filteredTrips = enhancedTrips;
@@ -412,14 +510,101 @@ export const searchRoutes = asyncHandler(async (req, res) => {
       estimatedDuration: route.estimatedDuration,
       fareStructure: route.fareStructure,
       trips: filteredTrips,
-      // Add basic pricing info when no trips available
+      // Enhanced pricing information for different scenarios
       estimatedFare: route.fareStructure ? 
         Math.round((route.fareStructure.baseFare || 150) + 
-                   (route.distance || 100) * (route.fareStructure.perKmRate || 1.2)) : 200
+                   (route.distance || 100) * (route.fareStructure.perKmRate || 1.2)) : 200,
+      pricingOptions: {
+        perPerson: route.fareStructure ? 
+          Math.round((route.fareStructure.baseFare || 150) + 
+                     (route.distance || 100) * (route.fareStructure.perKmRate || 1.2)) : 200,
+        forPassengers: route.fareStructure ? 
+          Math.round(((route.fareStructure.baseFare || 150) + 
+                     (route.distance || 100) * (route.fareStructure.perKmRate || 1.2)) * parseInt(passengers)) : 200 * parseInt(passengers),
+        currency: 'LKR',
+        byBusType: {
+          standard: route.fareStructure ? 
+            Math.round(((route.fareStructure.baseFare || 150) + 
+                       (route.distance || 100) * (route.fareStructure.perKmRate || 1.2)) * 1.0) : 200,
+          semiLuxury: route.fareStructure ? 
+            Math.round(((route.fareStructure.baseFare || 150) + 
+                       (route.distance || 100) * (route.fareStructure.perKmRate || 1.2)) * 1.2) : 240,
+          luxury: route.fareStructure ? 
+            Math.round(((route.fareStructure.baseFare || 150) + 
+                       (route.distance || 100) * (route.fareStructure.perKmRate || 1.2)) * 1.5) : 300,
+          superLuxury: route.fareStructure ? 
+            Math.round(((route.fareStructure.baseFare || 150) + 
+                       (route.distance || 100) * (route.fareStructure.perKmRate || 1.2)) * 1.8) : 360
+        },
+        discounts: route.fareStructure?.discounts || {
+          student: 0.5,
+          senior: 0.3,
+          child: 0.5
+        }
+      },
+      operationalInfo: {
+        operatingDays: route.operatingDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+        firstDeparture: route.operationalHours?.firstDeparture || '05:00',
+        lastDeparture: route.operationalHours?.lastDeparture || '22:00',
+        frequency: route.operationalHours?.frequency || 60
+      }
     };
 
     searchResults.routes.push(routeResult);
     searchResults.summary.totalTrips += filteredTrips.length;
+  }
+
+  // Calculate overall multi-passenger pricing for the search results
+  if (searchResults.routes.length > 0) {
+    const routePrices = searchResults.routes.map(route => {
+      const baseFare = route.fareStructure?.baseFare || 150;
+      const distanceFare = route.distance * (route.fareStructure?.perKmRate || route.fareStructure?.farePerKm || 1.2);
+      const perPersonPrice = Math.round(baseFare + distanceFare);
+      
+      // Apply age-based pricing
+      const adultPrice = perPersonPrice;
+      const childPrice = Math.round(perPersonPrice * 0.5); // Children get 50% discount
+      
+      const totalForAdults = adultPrice * numAdults;
+      const totalForChildren = childPrice * numChildren;
+      const totalPrice = totalForAdults + totalForChildren;
+      const totalSavings = (perPersonPrice * numChildren) - totalForChildren;
+      
+      return {
+        perPersonPrice,
+        adultPrice,
+        childPrice,
+        totalPrice,
+        totalSavings
+      };
+    });
+
+    // Update search results pricing summary
+    if (routePrices.length > 0) {
+      const avgAdultPrice = Math.round(routePrices.reduce((sum, p) => sum + p.adultPrice, 0) / routePrices.length);
+      const avgChildPrice = Math.round(routePrices.reduce((sum, p) => sum + p.childPrice, 0) / routePrices.length);
+      const avgTotalPrice = Math.round(routePrices.reduce((sum, p) => sum + p.totalPrice, 0) / routePrices.length);
+      const avgTotalSavings = Math.round(routePrices.reduce((sum, p) => sum + p.totalSavings, 0) / routePrices.length);
+
+      searchResults.pricing = {
+        adultPrice: avgAdultPrice,
+        childPrice: avgChildPrice,
+        totalPrice: avgTotalPrice,
+        breakdown: {
+          adults: { 
+            count: numAdults, 
+            unitPrice: avgAdultPrice, 
+            total: avgAdultPrice * numAdults 
+          },
+          children: { 
+            count: numChildren, 
+            unitPrice: avgChildPrice, 
+            total: avgChildPrice * numChildren 
+          }
+        },
+        savings: avgTotalSavings
+      };
+    }
   }
 
   // Calculate overall summary
@@ -695,10 +880,93 @@ export const getAvailableCities = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Get price estimates for a route
- * @route   GET /api/routes/pricing/:from/:to
+ * @desc    Simple price check between two cities
+ * @route   GET /api/routes/price-check
  * @access  Public
  */
+export const getPriceCheck = asyncHandler(async (req, res) => {
+  const { from, to, passengers = 1 } = req.query;
+
+  if (!from || !to) {
+    return res.status(400).json({
+      success: false,
+      message: 'Both "from" and "to" parameters are required'
+    });
+  }
+
+  // Find routes between cities
+  const routes = await Route.findRoutesBetween(from, to);
+
+  if (routes.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: `No routes found between ${from} and ${to}`,
+      suggestion: 'Try checking nearby cities or contact local transport authorities'
+    });
+  }
+
+  // Calculate simple pricing for each route
+  const priceResults = routes.map(route => {
+    const baseFare = route.fareStructure?.baseFare || 150;
+    const perKmRate = route.fareStructure?.perKmRate || 1.2;
+    const basePrice = baseFare + (route.distance * perKmRate);
+
+    return {
+      routeNumber: route.routeNumber,
+      routeName: route.routeName,
+      distance: `${route.distance} km`,
+      estimatedDuration: `${Math.floor(route.estimatedDuration / 60)}h ${route.estimatedDuration % 60}m`,
+      pricing: {
+        pricePerPerson: Math.round(basePrice),
+        totalForPassengers: Math.round(basePrice * parseInt(passengers)),
+        currency: 'LKR',
+        busTypeVariations: {
+          standard: Math.round(basePrice * 1.0),
+          semiLuxury: Math.round(basePrice * 1.2),
+          luxury: Math.round(basePrice * 1.5),
+          superLuxury: Math.round(basePrice * 1.8)
+        }
+      },
+      schedule: {
+        operatingDays: route.operatingDays?.length || 7,
+        firstBus: route.operationalHours?.firstDeparture || '05:00',
+        lastBus: route.operationalHours?.lastDeparture || '22:00',
+        frequency: `Every ${route.operationalHours?.frequency || 60} minutes`
+      }
+    };
+  });
+
+  // Calculate summary
+  const allPrices = priceResults.map(r => r.pricing.pricePerPerson);
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      searchQuery: { from, to, passengers: parseInt(passengers) },
+      results: priceResults,
+      summary: {
+        routesFound: routes.length,
+        priceRange: {
+          lowest: Math.min(...allPrices),
+          highest: Math.max(...allPrices),
+          average: Math.round(allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length),
+          currency: 'LKR'
+        },
+        totalForAllPassengers: {
+          lowest: Math.min(...allPrices) * parseInt(passengers),
+          highest: Math.max(...allPrices) * parseInt(passengers),
+          currency: 'LKR'
+        }
+      },
+      tips: [
+        'Prices may vary based on time of day and season',
+        'Luxury buses offer more comfort at higher prices',
+        'Book in advance for better seat selection',
+        'Student and senior discounts may be available'
+      ]
+    }
+  });
+});
 export const getPriceEstimate = asyncHandler(async (req, res) => {
   // Handle both path params (/pricing/:from/:to) and query params (/estimate-price?origin=...&destination=...)
   const from = req.params.from || req.query.origin;

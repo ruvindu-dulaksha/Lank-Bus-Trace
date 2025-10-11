@@ -28,8 +28,8 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: {
-      values: ['admin', 'operator', 'commuter'],
-      message: 'Role must be either admin, operator, or commuter'
+      values: ['admin', 'operator', 'commuter', 'driver', 'conductor', 'dispatcher'],
+      message: 'Role must be admin, operator, commuter, driver, conductor, or dispatcher'
     },
     default: 'commuter'
   },
@@ -77,6 +77,85 @@ const userSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Bus'
     }]
+  },
+  driverDetails: {
+    licenseNumber: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function(v) {
+          return !this.role || this.role !== 'driver' || (v && v.length > 0);
+        },
+        message: 'License number is required for drivers'
+      }
+    },
+    licenseClass: {
+      type: String,
+      enum: ['A', 'A1', 'B', 'B1', 'C', 'C1', 'D', 'D1', 'G'],
+      validate: {
+        validator: function(v) {
+          return !this.role || this.role !== 'driver' || (v && v.length > 0);
+        },
+        message: 'License class is required for drivers'
+      }
+    },
+    licenseExpiry: {
+      type: Date,
+      validate: {
+        validator: function(v) {
+          return !this.role || this.role !== 'driver' || (v && v > new Date());
+        },
+        message: 'Valid license expiry date is required for drivers'
+      }
+    },
+    experienceYears: {
+      type: Number,
+      min: [0, 'Experience years cannot be negative'],
+      max: [50, 'Experience years seems too high']
+    },
+    assignedBuses: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Bus'
+    }],
+    assignedRoutes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Route'
+    }],
+    medicalCertExpiry: Date,
+    trainingCertifications: [String],
+    emergencyContact: {
+      name: String,
+      phone: String,
+      relationship: String
+    }
+  },
+  conductorDetails: {
+    employeeId: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function(v) {
+          return !this.role || this.role !== 'conductor' || (v && v.length > 0);
+        },
+        message: 'Employee ID is required for conductors'
+      }
+    },
+    experienceYears: {
+      type: Number,
+      min: [0, 'Experience years cannot be negative'],
+      max: [50, 'Experience years seems too high']
+    },
+    assignedRoutes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Route'
+    }],
+    trainingCertifications: [String],
+    cashHandlingCertExpiry: Date,
+    emergencyContact: {
+      name: String,
+      phone: String,
+      relationship: String
+    }
   },
   apiKey: {
     type: String,
@@ -129,10 +208,7 @@ userSchema.virtual('isLocked').get(function() {
   return !!(this.lockUntil && this.lockUntil > Date.now());
 });
 
-// Indexes
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-userSchema.index({ apiKey: 1 });
+// Indexes (only for fields that don't have unique: true)
 userSchema.index({ 'operatorDetails.assignedRoutes': 1 });
 
 // Pre-save middleware to hash password
@@ -185,6 +261,10 @@ userSchema.methods.resetLoginAttempts = function() {
 
 // Static method to find by credentials
 userSchema.statics.findByCredentials = async function(emailOrUsername, password) {
+  if (!emailOrUsername || !password) {
+    throw new Error('Email/username and password are required');
+  }
+
   const user = await this.findOne({
     $or: [
       { email: emailOrUsername.toLowerCase() },

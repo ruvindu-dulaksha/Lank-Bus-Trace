@@ -61,10 +61,20 @@ export const register = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 export const login = asyncHandler(async (req, res) => {
-  const { emailOrUsername, password } = req.body;
+  let { emailOrUsername, email, password } = req.body;
+  
+  // Use emailOrUsername if provided, otherwise use email
+  const loginIdentifier = emailOrUsername || email;
+  
+  if (!loginIdentifier) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email or username is required'
+    });
+  }
 
   try {
-    const user = await User.findByCredentials(emailOrUsername, password);
+    const user = await User.findByCredentials(loginIdentifier, password);
     const token = generateToken(user._id);
 
     // Remove password from output
@@ -258,4 +268,112 @@ export const changePassword = asyncHandler(async (req, res) => {
     success: true,
     message: 'Password changed successfully'
   });
+});
+
+/**
+ * @desc    Logout user
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
+export const logout = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+
+  // Remove the specific refresh token if provided
+  if (refreshToken) {
+    await User.findByIdAndUpdate(
+      req.user._id,
+      { $pull: { refreshTokens: refreshToken } }
+    );
+  }
+
+  // Update last logout time
+  await User.findByIdAndUpdate(
+    req.user._id,
+    { lastLogout: new Date() }
+  );
+
+  logger.info(`User logged out: ${req.user.username}`);
+
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully'
+  });
+});
+
+/**
+ * @desc    Refresh access token
+ * @route   POST /api/auth/refresh
+ * @access  Public
+ */
+export const refreshToken = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: 'Refresh token is required'
+    });
+  }
+
+  try {
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+    
+    // Find user and check if refresh token exists
+    const user = await User.findById(decoded.userId);
+    
+    if (!user || !user.refreshTokens.includes(refreshToken)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated'
+      });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    );
+
+    // Optionally generate new refresh token and rotate
+    const newRefreshToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+    );
+
+    // Replace old refresh token with new one
+    user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
+    user.refreshTokens.push(newRefreshToken);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data: {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role
+        }
+      }
+    });
+
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid or expired refresh token'
+    });
+  }
 });

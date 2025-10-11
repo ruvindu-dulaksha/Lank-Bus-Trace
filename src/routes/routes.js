@@ -10,12 +10,18 @@ import {
   getRoutesByProvince,
   getRouteStats,
   getAvailableCities,
-  getPriceEstimate
+  getPriceEstimate,
+  getPriceCheck
 } from '../controllers/routeController.js';
+import { 
+  liveRouteSearch, 
+  getLiveBusesOnRoute 
+} from '../controllers/liveSearchController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { 
   validateRouteCreate,
-  validatePagination 
+  validatePagination,
+  validateRouteSearch
 } from '../middleware/validation.js';
 import { conditionalGET, setCacheControl } from '../middleware/conditionalGET.js';
 
@@ -83,13 +89,98 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', authenticate, validatePagination, setCacheControl(300), conditionalGET, getAllRoutes);
+router.get('/', validatePagination, setCacheControl(300), conditionalGET, getAllRoutes);
 
 /**
  * @swagger
  * /api/routes/search:
  *   get:
- *     summary: Search routes between cities
+ *     summary: Search routes between cities (Public Access)
+ *     tags: [Routes]
+ *     parameters:
+ *       - in: query
+ *         name: from
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Origin city
+ *       - in: query
+ *         name: to
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Destination city
+ *       - in: query
+ *         name: origin
+ *         schema:
+ *           type: string
+ *         description: Origin city (alternative parameter)
+ *       - in: query
+ *         name: destination
+ *         schema:
+ *           type: string
+ *         description: Destination city (alternative parameter)
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Travel date (YYYY-MM-DD)
+ *       - in: query
+ *         name: passengers
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Number of passengers
+ *       - in: query
+ *         name: busType
+ *         schema:
+ *           type: string
+ *           enum: [standard, semi-luxury, luxury, super-luxury, express]
+ *         description: Filter by bus type
+ *     responses:
+ *       200:
+ *         description: Routes and available trips with pricing information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     searchParams:
+ *                       type: object
+ *                     routes:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Route'
+ *                     summary:
+ *                       type: object
+ *                       properties:
+ *                         totalRoutes:
+ *                           type: integer
+ *                         priceRange:
+ *                           type: object
+ *                           properties:
+ *                             min:
+ *                               type: number
+ *                             max:
+ *                               type: number
+ *                             currency:
+ *                               type: string
+ *       400:
+ *         description: Origin and destination are required
+ */
+router.get('/search', validateRouteSearch, setCacheControl(60), searchRoutes); // Public endpoint with pricing
+
+/**
+ * @swagger
+ * /api/routes/live-search:
+ *   get:
+ *     summary: Live search for routes with real-time running buses and upcoming schedules
  *     tags: [Routes]
  *     parameters:
  *       - in: query
@@ -110,9 +201,21 @@ router.get('/', authenticate, validatePagination, setCacheControl(300), conditio
  *           type: string
  *           format: date
  *         description: Travel date (YYYY-MM-DD)
+ *       - in: query
+ *         name: adults
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Number of adult passengers
+ *       - in: query
+ *         name: children
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Number of child passengers
  *     responses:
  *       200:
- *         description: Routes and available trips
+ *         description: Live route search results with running and upcoming buses
  *         content:
  *           application/json:
  *             schema:
@@ -120,30 +223,62 @@ router.get('/', authenticate, validatePagination, setCacheControl(300), conditio
  *               properties:
  *                 success:
  *                   type: boolean
- *                 data:
+ *                 message:
+ *                   type: string
+ *                 summary:
  *                   type: object
  *                   properties:
- *                     routes:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/Route'
- *                     trips:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/Trip'
- *                     searchParams:
- *                       type: object
- *       400:
- *         description: Origin and destination are required
+ *                     totalRoutes:
+ *                       type: integer
+ *                     currentlyRunning:
+ *                       type: integer
+ *                     upcomingBuses:
+ *                       type: integer
+ *                 routes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       route:
+ *                         type: object
+ *                       liveStatus:
+ *                         type: object
+ *                         properties:
+ *                           currentlyRunning:
+ *                             type: array
+ *                           upcomingBuses:
+ *                             type: array
  */
-router.get('/search', authenticate, setCacheControl(60), searchRoutes); // Reduced cache to 1 minute
+router.get('/live-search', validateRouteSearch, setCacheControl(30), liveRouteSearch); // Live search with 30s cache
 
-// Cities endpoint (must come before /:id routes)
-router.get('/cities', authenticate, setCacheControl(600), conditionalGET, getAvailableCities);
+/**
+ * @swagger
+ * /api/routes/{routeId}/live-buses:
+ *   get:
+ *     summary: Get live bus tracking for a specific route
+ *     tags: [Routes]
+ *     parameters:
+ *       - in: path
+ *         name: routeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Route ID
+ *     responses:
+ *       200:
+ *         description: Live buses on route
+ */
+router.get('/:routeId/live-buses', setCacheControl(15), getLiveBusesOnRoute); // Very short cache for live data
 
-// Pricing endpoints (must come before /:id routes)  
-router.get('/pricing/:from/:to', authenticate, setCacheControl(300), getPriceEstimate);
-router.get('/estimate-price', authenticate, setCacheControl(300), getPriceEstimate);
+// Simple price check endpoint - Public access for quick price checking
+router.get('/price-check', setCacheControl(300), getPriceCheck);
+
+// Cities endpoint (must come before /:id routes) - Public access for better UX
+router.get('/cities', setCacheControl(600), conditionalGET, getAvailableCities);
+
+// Pricing endpoints (must come before /:id routes) - Public access for price checking
+router.get('/pricing/:from/:to', setCacheControl(300), getPriceEstimate);
+router.get('/estimate-price', setCacheControl(300), getPriceEstimate);
 
 /**
  * @swagger
@@ -211,7 +346,7 @@ router.get('/province/:province', authenticate, getRoutesByProvince);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get('/:id', authenticate, getRoute);
+router.get('/:id', getRoute); // Made public for passenger information
 
 /**
  * @swagger
@@ -230,7 +365,7 @@ router.get('/:id', authenticate, getRoute);
  *       200:
  *         description: Route stops information
  */
-router.get('/:id/stops', authenticate, getRouteStops);
+router.get('/:id/stops', getRouteStops); // Made public for passenger information
 
 /**
  * @swagger

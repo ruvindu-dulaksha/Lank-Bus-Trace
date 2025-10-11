@@ -4,7 +4,7 @@ export const swaggerOptions = {
     info: {
       title: 'Lanka Bus Trace API',
       version: '1.0.0',
-      description: 'Real-time bus tracking system for inter-provincial services in Sri Lanka - Lanka Bus Trace API',
+      description: 'Real-time inter-provincial bus tracking system for Sri Lanka. NTC compliant tracking-only service - no booking functionality.',
       contact: {
         name: 'Lanka Bus Trace',
         url: 'https://www.lankabustrace.lk',
@@ -21,7 +21,7 @@ export const swaggerOptions = {
         description: 'Development server'
       },
       {
-        url: 'https://your-api-domain.com/api',
+        url: 'https://ruvindu-dulaksha.me/',
         description: 'Production server (AWS)'
       }
     ],
@@ -240,20 +240,32 @@ export const swaggerOptions = {
         description: 'User authentication and authorization'
       },
       {
+        name: 'System',
+        description: 'System configuration and health'
+      },
+      {
         name: 'Routes',
-        description: 'Bus route management'
+        description: 'Inter-provincial bus routes'
       },
       {
         name: 'Buses',
-        description: 'Bus fleet management'
+        description: 'Bus fleet management and tracking'
       },
       {
         name: 'Trips',
-        description: 'Trip scheduling and management'
+        description: 'Trip scheduling and tracking'
       },
       {
         name: 'Locations',
-        description: 'Real-time location tracking'
+        description: 'Real-time GPS location tracking'
+      },
+      {
+        name: 'Analytics',
+        description: 'Fleet analytics and reporting'
+      },
+      {
+        name: 'Users',
+        description: 'User management and roles'
       }
     ]
   },

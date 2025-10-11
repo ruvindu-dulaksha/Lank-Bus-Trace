@@ -88,7 +88,31 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', authenticate, validatePagination, getAllBuses);
+router.get('/', validatePagination, getAllBuses);
+
+/**
+ * @swagger
+ * /api/buses/search:
+ *   get:
+ *     summary: Search buses
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: query
+ *         name: busType
+ *         schema:
+ *           type: string
+ *           enum: [standard, luxury, semi_luxury, air_conditioned, super_luxury]
+ *         description: Filter by bus type
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by registration number, bus number, or operator
+ *     responses:
+ *       200:
+ *         description: List of buses matching search criteria
+ */
+router.get('/search', validatePagination, getAllBuses); // Reuse getAllBuses with query params
 
 /**
  * @swagger
@@ -222,7 +246,7 @@ router.get('/route/:routeId', authenticate, getBusesByRoute);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get('/:id', authenticate, getBus);
+router.get('/:id', getBus); // Made public for passenger information
 
 /**
  * @swagger

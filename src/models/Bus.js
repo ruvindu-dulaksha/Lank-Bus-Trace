@@ -302,9 +302,7 @@ busSchema.virtual('maintenanceStatus').get(function() {
   return 'up-to-date';
 });
 
-// Indexes
-busSchema.index({ registrationNumber: 1 });
-busSchema.index({ busNumber: 1 });
+// Indexes (only for fields that don't have unique: true)
 busSchema.index({ 'operatorInfo.operatorId': 1 });
 busSchema.index({ operationalStatus: 1 });
 busSchema.index({ currentLocation: '2dsphere' });

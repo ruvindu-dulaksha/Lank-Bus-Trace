@@ -22,6 +22,15 @@ import busRoutes from './routes/buses.js';
 import routeRoutes from './routes/routes.js';
 import tripRoutes from './routes/trips.js';
 import locationRoutes from './routes/locations.js';
+import userRoutes from './routes/users.js';
+import pricingRoutes from './routes/pricing.js';
+import seasonRoutes from './routes/seasons.js';
+import searchRoutes from './routes/search.js';
+import dashboardRoutes from './routes/dashboard.js';
+import roleRoutes from './routes/roles.js';
+import analyticsRoutes from './routes/analytics.js';
+import reportsRoutes from './routes/reports.js';
+import systemRoutes from './routes/system.js';
 
 // Load environment variables
 dotenv.config();
@@ -86,11 +95,25 @@ app.use(morgan('combined', { stream: { write: message => logger.info(message.tri
 
 // Swagger Documentation
 const specs = swaggerJsdoc(swaggerOptions);
+
+// Swagger UI at /api-docs (main documentation interface)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "Lanka Bus Trace API Documentation"
 }));
+
+// API Documentation info endpoint (for testing purposes)
+app.get('/api/docs', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Lanka Bus Trace API Documentation',
+    documentation: 'Interactive API documentation available',
+    swaggerUI: '/api-docs',
+    apiInfo: '/api',
+    version: '1.0.0'
+  });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -103,12 +126,57 @@ app.get('/health', (req, res) => {
   });
 });
 
+// API Health endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: 'healthy',
+    api: {
+      name: 'Lanka Bus Trace API',
+      version: '1.0.0',
+      status: 'operational'
+    },
+    database: {
+      status: 'connected',
+      type: 'MongoDB'
+    },
+    system: {
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      environment: process.env.NODE_ENV || 'development'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/buses', busRoutes);
 app.use('/api/routes', routeRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/pricing', pricingRoutes);
+app.use('/api/seasons', seasonRoutes);
+app.use('/api', searchRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api', roleRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/system', systemRoutes);
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Lanka Bus Trace API',
+    version: '1.0.0',
+    status: 'running',
+    message: 'Welcome to Lanka Bus Trace API - Real-time bus tracking system for Sri Lanka',
+    documentation: '/api-docs',
+    api: '/api',
+    health: '/health'
+  });
+});
 
 // API Info endpoint
 app.get('/api', (req, res) => {
@@ -123,7 +191,16 @@ app.get('/api', (req, res) => {
       buses: '/api/buses',
       routes: '/api/routes',
       trips: '/api/trips',
-      locations: '/api/locations'
+      locations: '/api/locations',
+      users: '/api/users',
+      pricing: '/api/pricing',
+      seasons: '/api/seasons',
+      search: '/api/search',
+      liveSearch: '/api/live-search',
+      dashboard: '/api/dashboard',
+      driver: '/api/driver',
+      conductor: '/api/conductor',
+      operator: '/api/operator'
     },
     contact: {
       organization: 'Lanka Bus Trace',

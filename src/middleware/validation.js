@@ -64,16 +64,27 @@ export const validateDateRange = [
 // Authentication validations
 export const validateLogin = [
   body('emailOrUsername')
-    .notEmpty()
-    .withMessage('Email or username is required')
+    .optional()
     .trim()
     .isLength({ min: 3, max: 100 })
     .withMessage('Email or username must be between 3 and 100 characters'),
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
   body('password')
     .notEmpty()
     .withMessage('Password is required')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
+  // Custom validation to ensure either email or emailOrUsername is provided
+  body().custom((value, { req }) => {
+    if (!req.body.email && !req.body.emailOrUsername) {
+      throw new Error('Either email or emailOrUsername is required');
+    }
+    return true;
+  }),
   handleValidationErrors
 ];
 
@@ -92,9 +103,7 @@ export const validateRegister = [
     .normalizeEmail(),
   body('password')
     .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    .withMessage('Password must be at least 6 characters long'),
   body('role')
     .optional()
     .isIn(['admin', 'operator', 'commuter'])
@@ -343,13 +352,43 @@ export const validateRouteSearch = [
   query('origin')
     .optional()
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Origin must be between 2 and 100 characters'),
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Origin must be between 1 and 100 characters'),
   query('destination')
     .optional()
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Destination must be between 2 and 100 characters'),
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Destination must be between 1 and 100 characters'),
+  query('from')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('From location must be between 1 and 100 characters'),
+  query('to')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('To location must be between 1 and 100 characters'),
+  query('passengerAge')
+    .optional()
+    .isInt({ min: 0, max: 120 })
+    .withMessage('Passenger age must be between 0 and 120'),
+  query('ticketType')
+    .optional()
+    .isIn(['adult', 'child'])
+    .withMessage('Ticket type must be either adult or child'),
+  query('passengers')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Number of passengers must be between 1 and 50'),
+  query('busType')
+    .optional()
+    .isIn(['standard', 'semi-luxury', 'luxury', 'super-luxury', 'express'])
+    .withMessage('Invalid bus type'),
+  query('departureTime')
+    .optional()
+    .isIn(['morning', 'afternoon', 'evening', 'night'])
+    .withMessage('Departure time must be morning, afternoon, evening, or night'),
   query('minDistance')
     .optional()
     .isFloat({ min: 0 })
@@ -423,3 +462,164 @@ export const sanitizeInput = (req, res, next) => {
 
   next();
 };
+
+// Season validation
+export const validateSeasonCreate = [
+  body('name')
+    .notEmpty()
+    .withMessage('Season name is required')
+    .isLength({ max: 100 })
+    .withMessage('Season name cannot exceed 100 characters'),
+  body('type')
+    .isIn(['peak', 'off_peak', 'festival', 'holiday', 'normal'])
+    .withMessage('Season type must be: peak, off_peak, festival, holiday, or normal'),
+  body('description')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Description cannot exceed 500 characters'),
+  body('startDate')
+    .isISO8601()
+    .withMessage('Valid start date is required'),
+  body('endDate')
+    .isISO8601()
+    .withMessage('Valid end date is required'),
+  body('priceMultiplier')
+    .isFloat({ min: 0.1, max: 5.0 })
+    .withMessage('Price multiplier must be between 0.1 and 5.0'),
+  body('priority')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Priority must be between 1 and 100'),
+  body('applicableRoutes')
+    .optional()
+    .isArray()
+    .withMessage('Applicable routes must be an array'),
+  body('applicableBusTypes')
+    .optional()
+    .isArray()
+    .withMessage('Applicable bus types must be an array'),
+  body('days')
+    .optional()
+    .isArray()
+    .withMessage('Days must be an array'),
+  handleValidationErrors
+];
+
+// User validation
+export const validateUserUpdate = [
+  body('username')
+    .optional()
+    .isLength({ min: 3, max: 30 })
+    .withMessage('Username must be between 3 and 30 characters')
+    .matches(/^[a-zA-Z0-9_-]+$/)
+    .withMessage('Username can only contain letters, numbers, underscores, and hyphens'),
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('Valid email is required')
+    .normalizeEmail(),
+  body('fullName')
+    .optional()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Full name must be between 1 and 100 characters'),
+  body('role')
+    .optional()
+    .isIn(['admin', 'operator', 'commuter'])
+    .withMessage('Role must be admin, operator, or commuter'),
+  body('isActive')
+    .optional()
+    .isBoolean()
+    .withMessage('isActive must be a boolean'),
+  handleValidationErrors
+];
+
+// Pricing validation rules
+export const validatePricingCalculation = [
+  query('basePrice')
+    .notEmpty()
+    .withMessage('Base price is required')
+    .isFloat({ min: 0.01 })
+    .withMessage('Base price must be a positive number'),
+  query('age')
+    .optional()
+    .isInt({ min: 0, max: 120 })
+    .withMessage('Age must be between 0 and 120'),
+  handleValidationErrors
+];
+
+export const validatePricingRule = [
+  body('name')
+    .notEmpty()
+    .withMessage('Pricing rule name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be between 2 and 100 characters'),
+  body('type')
+    .notEmpty()
+    .withMessage('Pricing rule type is required')
+    .isIn(['age_discount', 'standard'])
+    .withMessage('Type must be either age_discount or standard'),
+  body('description')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Description cannot exceed 500 characters'),
+  body('ageDiscount.minAge')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Minimum age must be 0 or greater'),
+  body('ageDiscount.maxAge')
+    .optional()
+    .isInt({ min: 0, max: 120 })
+    .withMessage('Maximum age must be between 0 and 120'),
+  body('ageDiscount.discountPercentage')
+    .optional()
+    .isFloat({ min: 0, max: 100 })
+    .withMessage('Discount percentage must be between 0 and 100'),
+  body('priority')
+    .optional()
+    .isInt({ min: 1, max: 10 })
+    .withMessage('Priority must be between 1 and 10'),
+  body('isActive')
+    .optional()
+    .isBoolean()
+    .withMessage('isActive must be a boolean'),
+  handleValidationErrors
+];
+
+export const validatePricingRuleUpdate = [
+  param('id')
+    .isMongoId()
+    .withMessage('Invalid pricing rule ID'),
+  body('name')
+    .optional()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be between 2 and 100 characters'),
+  body('type')
+    .optional()
+    .isIn(['age_discount', 'standard'])
+    .withMessage('Type must be either age_discount or standard'),
+  body('description')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Description cannot exceed 500 characters'),
+  body('ageDiscount.minAge')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Minimum age must be 0 or greater'),
+  body('ageDiscount.maxAge')
+    .optional()
+    .isInt({ min: 0, max: 120 })
+    .withMessage('Maximum age must be between 0 and 120'),
+  body('ageDiscount.discountPercentage')
+    .optional()
+    .isFloat({ min: 0, max: 100 })
+    .withMessage('Discount percentage must be between 0 and 100'),
+  body('priority')
+    .optional()
+    .isInt({ min: 1, max: 10 })
+    .withMessage('Priority must be between 1 and 10'),
+  body('isActive')
+    .optional()
+    .isBoolean()
+    .withMessage('isActive must be a boolean'),
+  handleValidationErrors
+];

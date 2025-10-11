@@ -301,8 +301,7 @@ locationSchema.virtual('isDeviceOnline').get(function() {
 // Create 2dsphere index for geospatial queries
 locationSchema.index({ 'currentLocation.coordinates': '2dsphere' });
 
-// Other indexes
-locationSchema.index({ busId: 1 });
+// Other indexes (excluding busId which has unique: true)
 locationSchema.index({ tripId: 1 });
 locationSchema.index({ routeId: 1 });
 locationSchema.index({ 'currentLocation.lastUpdated': 1 });

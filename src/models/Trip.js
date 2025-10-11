@@ -307,8 +307,7 @@ tripSchema.virtual('isDelayed').get(function() {
   return this.totalDelay > 15; // Consider delayed if more than 15 minutes
 });
 
-// Indexes
-tripSchema.index({ tripNumber: 1 });
+// Indexes (only for fields that don't have unique: true)
 tripSchema.index({ routeId: 1, 'schedule.plannedDeparture': 1 });
 tripSchema.index({ busId: 1, 'schedule.plannedDeparture': 1 });
 tripSchema.index({ status: 1 });

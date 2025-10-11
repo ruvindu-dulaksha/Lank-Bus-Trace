@@ -81,7 +81,36 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', authenticate, validatePagination, getAllTrips);
+router.get('/', validatePagination, getAllTrips);
+
+/**
+ * @swagger
+ * /api/trips/search:
+ *   get:
+ *     summary: Search trips
+ *     tags: [Trips]
+ *     parameters:
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: string
+ *         description: Origin city
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: string
+ *         description: Destination city
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Travel date
+ *     responses:
+ *       200:
+ *         description: List of trips matching search criteria
+ */
+router.get('/search', validatePagination, getAllTrips); // Reuse getAllTrips with query params
 
 /**
  * @swagger
