@@ -13,6 +13,7 @@ export const forgotPasswordLimiter = rateLimit({
   },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  trustProxy: true,
   skip: (req) => {
     // Skip rate limiting in test environment
     return process.env.NODE_ENV === 'test';
@@ -34,6 +35,7 @@ export const loginLimiter = rateLimit({
   },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  trustProxy: true,
   skip: (req) => {
     return process.env.NODE_ENV === 'test';
   },
@@ -54,6 +56,7 @@ export const registerLimiter = rateLimit({
   },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  trustProxy: true,
   skip: (req) => {
     return process.env.NODE_ENV === 'test';
   },
@@ -74,6 +77,7 @@ export const resetPasswordLimiter = rateLimit({
   },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  trustProxy: true,
   skip: (req) => {
     return process.env.NODE_ENV === 'test';
   },
@@ -154,6 +158,7 @@ export const globalApiLimiter = rateLimit({
   },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  trustProxy: true, // Essential for Nginx proxy
   skip: (req) => {
     return process.env.NODE_ENV === 'test';
   }

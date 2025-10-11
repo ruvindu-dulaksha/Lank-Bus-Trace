@@ -39,6 +39,9 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
+// Trust proxy for Nginx reverse proxy
+app.set('trust proxy', true);
+
 // Connect to MongoDB
 connectDB();
 
