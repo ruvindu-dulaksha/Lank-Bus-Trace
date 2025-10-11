@@ -190,9 +190,61 @@ curl -H "Authorization: Bearer <your_jwt_token>" \
 
 ### 📊 Production Backend Architecture
 
-![Lanka Bus Trace API - Production Backend Architecture](docs/ARCHITECTURE.md)
+![Lanka Bus Trace API - Production Backend Architecture](docs/architecture-diagram.md)
 
-*Complete production architecture showing all layers from client applications to external services*
+*Complete production backend architecture diagram showing all layers from client applications to external services*
+
+The Lanka Bus Trace API follows a comprehensive **9-layer architecture** designed for scalability, security, and maintainability:
+
+#### 🖥️ **Layer 1: Client Applications**
+- **Web Browsers** (Admin Dashboard)
+- **Mobile Apps** (Driver/Commuter Apps) 
+- **Postman/API Testing Tools**
+- **Third-party Integrations**
+
+#### 🌐 **Layer 2: Client Layer** 
+- **Namecheap Domain** (ruvindu-dulaksha.me)
+- **SSL/TLS Certificate** (Let's Encrypt)
+- **DNS Resolution**
+
+#### ☁️ **Layer 3: AWS Cloud**
+- **AWS EC2** (t2.micro, Free Tier)
+- **Security Groups** (Firewall)
+- **Elastic IP** (Optional)
+
+#### 🔧 **Layer 4: Web Server Layer**
+- **Nginx Reverse Proxy**
+- **Load Balancing**
+- **HTTPS Termination**
+- **Static File Serving**
+
+#### 🚀 **Layer 5: API Endpoints**
+- **Node.js Runtime**
+- **Express.js Framework**
+- **PM2 Process Manager**
+- **API Gateway**
+
+#### 🛡️ **Layer 6: Middleware**
+- **Rate Limiting**
+- **CORS Protection**
+- **Request Validation**
+- **Encrypt Password Hashing**
+
+#### 🎯 **Layer 7: API Endpoints**
+- **Controllers** (Business Logic)
+- **Services** (Data Processing)
+- **Utilities** (Helper Functions)
+- **Helmet Security Headers**
+
+#### 💾 **Layer 8: Business Logic**
+- **MongoDB Atlas Cluster**
+- **Services** (Authentication, Validation)
+- **Swagger** (OpenAPI Documentation)
+
+#### 🌍 **Layer 9: External Services**
+- **MongoDB Atlas** (Cloud Database)
+- **GitHub Repository** (Source Code)
+- **Swagger/OpenAPI** (Documentation)
 
 > **📋 Detailed Architecture**: See [Architecture Documentation](docs/ARCHITECTURE.md) for comprehensive system design details.
 
