@@ -397,6 +397,80 @@ GET /api/search?q=Colombo&type=route&limit=5
               }
             }
           }
+        },
+        Pagination: {
+          type: 'object',
+          description: 'Pagination information for paginated responses',
+          properties: {
+            currentPage: {
+              type: 'integer',
+              example: 1,
+              description: 'Current page number (1-based)'
+            },
+            totalPages: {
+              type: 'integer',
+              example: 5,
+              description: 'Total number of pages'
+            },
+            totalItems: {
+              type: 'integer',
+              example: 87,
+              description: 'Total number of items across all pages'
+            },
+            itemsPerPage: {
+              type: 'integer',
+              example: 20,
+              description: 'Number of items per page'
+            },
+            hasNextPage: {
+              type: 'boolean',
+              example: true,
+              description: 'Whether there is a next page available'
+            },
+            hasPrevPage: {
+              type: 'boolean',
+              example: false,
+              description: 'Whether there is a previous page available'
+            },
+            nextPage: {
+              type: 'integer',
+              nullable: true,
+              example: 2,
+              description: 'Next page number (null if no next page)'
+            },
+            prevPage: {
+              type: 'integer',
+              nullable: true,
+              example: null,
+              description: 'Previous page number (null if no previous page)'
+            }
+          },
+          required: ['currentPage', 'totalPages', 'totalItems', 'itemsPerPage']
+        },
+        PaginatedResponse: {
+          type: 'object',
+          description: 'Standard paginated response format',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true
+            },
+            message: {
+              type: 'string',
+              example: 'Data retrieved successfully'
+            },
+            data: {
+              type: 'array',
+              items: {
+                type: 'object'
+              },
+              description: 'Array of data items'
+            },
+            pagination: {
+              $ref: '#/components/schemas/Pagination'
+            }
+          },
+          required: ['success', 'data', 'pagination']
         }
       }
     },
