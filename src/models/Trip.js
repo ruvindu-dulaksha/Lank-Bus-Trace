@@ -278,10 +278,14 @@ tripSchema.virtual('plannedDuration').get(function() {
 
 // Virtual for actual duration
 tripSchema.virtual('actualDuration').get(function() {
-  if (this.schedule.actualArrival && this.schedule.actualDeparture) {
+  if (this.schedule && this.schedule.actualArrival && this.schedule.actualDeparture) {
     return Math.ceil((this.schedule.actualArrival - this.schedule.actualDeparture) / (1000 * 60)); // minutes
   }
-  return null;
+  // Fallback to actualArrival and actualDeparture (legacy fields)
+  if (this.actualArrival && this.actualDeparture) {
+    return Math.ceil((this.actualArrival - this.actualDeparture) / (1000 * 60)); // minutes
+  }
+  return 180; // Default duration in minutes
 });
 
 // Virtual for occupancy rate

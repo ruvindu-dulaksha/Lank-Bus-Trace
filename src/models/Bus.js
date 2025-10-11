@@ -281,7 +281,7 @@ busSchema.virtual('locationAge').get(function() {
   if (this.currentLocation?.lastUpdated) {
     return Date.now() - this.currentLocation.lastUpdated.getTime();
   }
-  return null;
+  return 0;
 });
 
 // Virtual for maintenance status
