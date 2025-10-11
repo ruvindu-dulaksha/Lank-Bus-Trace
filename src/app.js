@@ -45,9 +45,23 @@ app.set('trust proxy', 1);
 // Connect to MongoDB
 connectDB();
 
-// Security middleware
+// Security middleware - Enhanced for browser compatibility
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https:", "wss:"],
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false
 }));
 
 // CORS configuration - Comprehensive fix for Swagger UI
@@ -99,7 +113,7 @@ app.options('*', (req, res) => {
   res.status(200).end();
 });
 
-// Enhanced RESTful headers middleware
+// Enhanced RESTful headers middleware with browser compatibility
 app.use((req, res, next) => {
   // API versioning header
   res.set('API-Version', '1.0.0');
@@ -107,20 +121,15 @@ app.use((req, res, next) => {
   // Service identification
   res.set('X-Powered-By', 'Lanka Bus Trace API');
   
-  // Request ID for tracking
-  const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  res.set('X-Request-ID', requestId);
+  // Enhanced CORS headers for better browser compatibility
+  res.set('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, Accept, Origin, X-Requested-With, Access-Control-Allow-Headers');
+  res.set('Access-Control-Allow-Credentials', 'true');
+  res.set('Access-Control-Max-Age', '86400');
   
-  // Security headers for API
-  res.set('X-Content-Type-Options', 'nosniff');
-  res.set('X-Frame-Options', 'DENY');
-  res.set('X-XSS-Protection', '1; mode=block');
-  res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // API-specific headers for API routes
-  if (req.path.startsWith('/api/')) {
-    res.set('Content-Type', 'application/json; charset=utf-8');
-  }
+  // Request tracking
+  res.set('X-Request-ID', `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   
   next();
 });
