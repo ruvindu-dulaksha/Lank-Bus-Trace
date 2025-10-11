@@ -20,6 +20,19 @@ const generateToken = (userId) => {
 export const register = asyncHandler(async (req, res) => {
   const { username, email, password, role = 'commuter' } = req.body;
 
+  // Security: Restrict role assignment to prevent unauthorized admin creation
+  const allowedRoles = ['commuter'];
+  const userRole = allowedRoles.includes(role) ? role : 'commuter';
+  
+  if (role && role !== userRole) {
+    logger.warn(`Registration attempt with restricted role: ${role}`, {
+      username,
+      email,
+      attemptedRole: role,
+      ip: req.ip
+    });
+  }
+
   // Check if user exists
   const existingUser = await User.findOne({
     $or: [{ email }, { username }]
@@ -37,7 +50,7 @@ export const register = asyncHandler(async (req, res) => {
     username,
     email,
     password,
-    role
+    role: userRole  // Use sanitized role
   });
 
   // Generate token

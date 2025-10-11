@@ -66,9 +66,9 @@ const router = express.Router();
  *                 description: Password (must contain uppercase, lowercase, and number)
  *               role:
  *                 type: string
- *                 enum: [admin, operator, commuter]
+ *                 enum: [commuter]
  *                 default: commuter
- *                 description: User role
+ *                 description: User role (admin and operator roles require system administrator approval)
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -99,22 +99,22 @@ router.post('/register', registerLimiter, authSlowDown, validateRegister, regist
  *               emailOrUsername:
  *                 type: string
  *                 description: Email address or username
- *                 example: "testuser"
+ *                 example: "your_username"
  *               password:
  *                 type: string
  *                 description: User password
- *                 example: "Test123!"
+ *                 example: "your_password"
  *           examples:
  *             valid_user:
- *               summary: Valid test user credentials
+ *               summary: Sample user credentials
  *               value:
- *                 emailOrUsername: "testuser"
- *                 password: "Test123!"
+ *                 emailOrUsername: "your_username"
+ *                 password: "your_password"
  *             email_login:
  *               summary: Login with email
  *               value:
- *                 emailOrUsername: "test@example.com"
- *                 password: "Test123!"
+ *                 emailOrUsername: "user@example.com"
+ *                 password: "your_password"
  *     responses:
  *       200:
  *         description: Login successful - JWT token returned and cookie set

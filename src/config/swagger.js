@@ -80,7 +80,7 @@ curl https://ruvindu-dulaksha.me/api/routes/cities
 # Login to get JWT token
 curl -X POST https://ruvindu-dulaksha.me/api/auth/login \\
   -H "Content-Type: application/json" \\
-  -d '{"emailOrUsername": "Dulaksha", "password": "DulaBoy@2001"}'
+  -d '{"emailOrUsername": "your_username", "password": "your_password"}'
 
 # Use token in subsequent requests
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \\
@@ -101,10 +101,10 @@ curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=202
 
 ---
 
-## 🔐 Admin Test Credentials
-- **Username**: Dulaksha
-- **Password**: DulaBoy@2001
-- **Role**: admin
+## 🔐 Authentication Information
+- **Registration**: Contact system administrator for account creation
+- **Roles**: admin, operator, commuter (role-based access control)
+- **Security**: JWT tokens with HTTP-only cookie support
 
 *🔒 Use the "Authorize" button above to test protected endpoints*
 
@@ -113,9 +113,9 @@ curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=202
 **🌟 100% Functional API | Production Ready | Academic Excellence**
       `,
       contact: {
-        name: 'K.D.R. Dulaksha (COBSCCOMP241P-018)',
-        url: 'https://github.com/ruvindu-dulaksha',
-        email: 'dulaksha.student@example.com'
+        name: 'Lanka Bus Trace API Support',
+        url: 'https://github.com/ruvindu-dulaksha/lanka-bus-trace',
+        email: 'api-support@lanka-bus-trace.com'
       },
       license: {
         name: 'MIT',
@@ -185,10 +185,10 @@ curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=202
       },
       examples: {
         LoginRequest: {
-          summary: 'Admin Login Example',
+          summary: 'Sample Login Request',
           value: {
-            emailOrUsername: 'Dulaksha',
-            password: 'DulaBoy@2001'
+            emailOrUsername: 'your_username',
+            password: 'your_password'
           }
         },
         LoginResponse: {
@@ -198,10 +198,10 @@ curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=202
             message: 'Login successful',
             data: {
               user: {
-                _id: '68eaabc2ab5893e1ff1e2b0b',
-                username: 'Dulaksha',
-                email: 'ruvindu123456@gmail.com',
-                role: 'admin'
+                _id: '507f1f77bcf86cd799439011',
+                username: 'sample_user',
+                email: 'user@example.com',
+                role: 'commuter'
               },
               token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
             }
