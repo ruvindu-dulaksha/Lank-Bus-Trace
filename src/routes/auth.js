@@ -36,7 +36,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /auth/register:
+ * /api/auth/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Authentication]
@@ -81,7 +81,7 @@ router.post('/register', registerLimiter, authSlowDown, validateRegister, regist
 
 /**
  * @swagger
- * /auth/login:
+ * /api/auth/login:
  *   post:
  *     summary: Login user with JWT token and cookie support
  *     description: Authenticate user and receive JWT token. Response sets both token in body and httpOnly cookie for dual authentication support.
@@ -164,7 +164,7 @@ router.post('/login', loginLimiter, authSlowDown, validateLogin, login);
 
 /**
  * @swagger
- * /auth/forgot-password:
+ * /api/auth/forgot-password:
  *   post:
  *     summary: Request password reset via email
  *     tags: [Authentication]
@@ -218,7 +218,7 @@ router.post('/forgot-password',
 
 /**
  * @swagger
- * /auth/reset-password:
+ * /api/auth/reset-password:
  *   post:
  *     summary: Reset password with token from email
  *     tags: [Authentication]
@@ -252,7 +252,7 @@ router.post('/reset-password', resetPasswordLimiter, validateResetPassword, rese
 
 /**
  * @swagger
- * /auth/change-password:
+ * /api/auth/change-password:
  *   post:
  *     summary: Change password (for logged in users)
  *     tags: [Authentication]
@@ -288,7 +288,7 @@ router.post('/change-password', authenticate, validateChangePassword, changePass
 
 /**
  * @swagger
- * /auth/api-key:
+ * /api/auth/api-key:
  *   post:
  *     summary: Generate API key
  *     tags: [Authentication]
@@ -305,7 +305,7 @@ router.post('/api-key', authenticate, generateAPIKey);
 
 /**
  * @swagger
- * /auth/logout:
+ * /api/auth/logout:
  *   post:
  *     summary: Logout user
  *     tags: [Authentication]
@@ -331,7 +331,7 @@ router.post('/logout', authenticate, logout);
 
 /**
  * @swagger
- * /auth/refresh:
+ * /api/auth/refresh:
  *   post:
  *     summary: Refresh access token
  *     tags: [Authentication]
@@ -358,7 +358,7 @@ router.post('/refresh', refreshToken);
 
 /**
  * @swagger
- * /auth/me:
+ * /api/auth/me:
  *   get:
  *     summary: Get current user profile
  *     tags: [Authentication]
@@ -375,7 +375,7 @@ router.get('/me', authenticate, getCurrentUser);
 
 /**
  * @swagger
- * /auth/profile:
+ * /api/auth/profile:
  *   put:
  *     summary: Update current user profile
  *     tags: [Authentication]
@@ -407,7 +407,7 @@ router.put('/profile', authenticate, updateProfile);
 
 /**
  * @swagger
- * /auth/blacklist-stats:
+ * /api/auth/blacklist-stats:
  *   get:
  *     summary: Get token blacklist statistics (Admin only)
  *     tags: [Authentication]
@@ -443,7 +443,7 @@ router.get('/blacklist-stats', authenticate, getBlacklistStats);
 
 /**
  * @swagger
- * /auth/clear-blacklist:
+ * /api/auth/clear-blacklist:
  *   post:
  *     summary: Clear token blacklist (Admin only - Emergency use)
  *     tags: [Authentication]
