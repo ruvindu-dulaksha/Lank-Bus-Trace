@@ -227,8 +227,7 @@ routeSchema.virtual('averageSpeed').get(function() {
   return 0;
 });
 
-// Indexes
-routeSchema.index({ routeNumber: 1 });
+// Indexes (only for fields that don't have unique: true)
 routeSchema.index({ routeName: 'text' });
 routeSchema.index({ 'origin.city': 1, 'destination.city': 1 });
 routeSchema.index({ isActive: 1 });

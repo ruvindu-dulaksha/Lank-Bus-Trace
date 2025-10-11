@@ -5,8 +5,14 @@ import {
   generateAPIKey, 
   forgotPassword, 
   resetPassword, 
-  changePassword 
+  changePassword,
+  logout,
+  refreshToken
 } from '../controllers/authController.js';
+import {
+  getCurrentUser,
+  updateProfile
+} from '../controllers/userController.js';
 import { 
   validateLogin, 
   validateRegister,
@@ -243,5 +249,107 @@ router.post('/change-password', authenticate, validateChangePassword, changePass
  *         description: Insufficient permissions
  */
 router.post('/api-key', authenticate, generateAPIKey);
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Logout current user and invalidate refresh token
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: Refresh token to invalidate (optional)
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       401:
+ *         description: Authentication required
+ */
+router.post('/logout', authenticate, logout);
+
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Authentication]
+ *     description: Get new access token using refresh token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: Valid refresh token
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+router.post('/refresh', refreshToken);
+
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Get current authenticated user's profile information
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *       401:
+ *         description: Authentication required
+ */
+router.get('/me', authenticate, getCurrentUser);
+
+/**
+ * @swagger
+ * /auth/profile:
+ *   put:
+ *     summary: Update current user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Update current user's profile information
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               fullName:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Authentication required
+ */
+router.put('/profile', authenticate, updateProfile);
 
 export default router;

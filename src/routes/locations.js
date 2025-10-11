@@ -11,7 +11,8 @@ import {
 import { authenticate, authorize, authorizeOperator } from '../middleware/auth.js';
 import { 
   validateCoordinates,
-  validatePagination 
+  validatePagination,
+  validateNearbyQuery
 } from '../middleware/validation.js';
 
 const router = express.Router();
@@ -74,7 +75,30 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', authenticate, validatePagination, getAllLocations);
+router.get('/', validatePagination, getAllLocations);
+
+/**
+ * @swagger
+ * /api/locations/search:
+ *   get:
+ *     summary: Search locations
+ *     tags: [Locations]
+ *     parameters:
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *         description: Filter by city
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by location name
+ *     responses:
+ *       200:
+ *         description: List of locations matching search criteria
+ */
+router.get('/search', validatePagination, getAllLocations); // Reuse getAllLocations with query params
 
 /**
  * @swagger
@@ -144,7 +168,7 @@ router.get('/', authenticate, validatePagination, getAllLocations);
  *       400:
  *         description: Latitude and longitude are required
  */
-router.get('/nearby', authenticate, validateCoordinates, getNearbyBuses);
+router.get('/nearby', validateNearbyQuery, getNearbyBuses);
 
 /**
  * @swagger

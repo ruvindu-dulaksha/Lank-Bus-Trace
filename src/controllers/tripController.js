@@ -239,7 +239,7 @@ export const deleteTrip = asyncHandler(async (req, res) => {
  */
 export const updateTripStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
-  const validStatuses = ['scheduled', 'boarding', 'in_progress', 'completed', 'cancelled', 'delayed'];
+  const validStatuses = ['scheduled', 'boarding', 'departed', 'in-transit', 'arrived', 'completed', 'cancelled', 'delayed'];
 
   if (!validStatuses.includes(status)) {
     throw new AppError('Invalid trip status', 400);

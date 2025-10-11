@@ -4,13 +4,18 @@ import logger from '../config/logger.js';
 class EmailService {
   constructor() {
     this.transporter = null;
-    this.initializeEmailService();
+    this.initialized = false;
   }
 
   async initializeEmailService() {
+    if (this.initialized) return;
+    
     try {
+      // Debug: Check if environment variables are available
+      logger.info(`📧 Checking email config - User: ${process.env.GMAIL_USER ? 'SET' : 'NOT SET'}, Password: ${process.env.GMAIL_APP_PASSWORD ? 'SET' : 'NOT SET'}`);
+      
       // Gmail SMTP Configuration
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         service: 'gmail', // Use Gmail service
         host: 'smtp.gmail.com',
         port: 587,
@@ -23,13 +28,16 @@ class EmailService {
 
       // Verify connection (optional - skip if no credentials provided)
       if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+        logger.info(`📧 Attempting to verify SMTP connection for ${process.env.GMAIL_USER}...`);
         await this.transporter.verify();
         logger.info('📧 Gmail SMTP email service initialized successfully');
+        this.initialized = true;
       } else {
         logger.warn('📧 Gmail credentials not provided, email service will be disabled');
       }
     } catch (error) {
       logger.error('❌ Email service initialization failed:', error.message);
+      logger.error('❌ Full error details:', error);
       logger.warn('💡 To enable emails: Set GMAIL_USER and GMAIL_APP_PASSWORD in .env file');
       // In development, continue without email service
       if (process.env.NODE_ENV === 'production') {
@@ -39,6 +47,8 @@ class EmailService {
   }
 
   async sendPasswordResetEmail(email, resetToken, username) {
+    await this.initializeEmailService(); // Ensure service is initialized
+    
     const resetUrl = `${process.env.FRONTEND_URL || 'https://yourdomain.com'}/reset-password?token=${resetToken}`;
     
     const emailTemplate = {
@@ -51,6 +61,8 @@ class EmailService {
   }
 
   async sendEmail(to, { subject, html, text }) {
+    await this.initializeEmailService(); // Ensure service is initialized
+    
     try {
       if (!this.isEmailServiceAvailable()) {
         logger.warn('📧 Email service not available, skipping email send');
@@ -77,7 +89,7 @@ class EmailService {
   }
 
   isEmailServiceAvailable() {
-    return !!this.transporter && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD;
+    return this.initialized && !!this.transporter && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD;
   }
 
   getPasswordResetTemplate(username, resetUrl, resetToken) {
