@@ -112,11 +112,11 @@ GET /api/search?q=Colombo&type=route&limit=5
     },
     servers: [
       {
-        url: 'https://api.ruvindu-dulaksha.me/api',
+        url: 'https://api.ruvindu-dulaksha.me',
         description: 'Production server (AWS EC2 with SSL)'
       },
       {
-        url: 'http://localhost:3000/api',
+        url: 'http://localhost:3000',
         description: 'Development server'
       }
     ],
