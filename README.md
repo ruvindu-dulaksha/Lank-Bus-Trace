@@ -37,17 +37,58 @@ Real-time inter-provincial bus tracking system for Sri Lanka, built in complianc
 
 ## 📊 API Status: 100% Functional
 
-### ✅ Working Endpoints
+### ✅ Complete API Endpoints
 
-| Category | Endpoints | Status | Features |
-|----------|-----------|---------|----------|
-| **Authentication** | `/api/auth/*` | ✅ All roles working | Login, registration, JWT tokens |
-| **Routes** | `/api/routes/*` | ✅ Search & CRUD operations | Inter-city search, route discovery |
-| **Buses** | `/api/buses/*` | ✅ Geospatial & fleet management | Fleet status, location tracking |
-| **Trips** | `/api/trips/*` | ✅ Scheduling & monitoring | Real-time trip status |
-| **Locations** | `/api/locations/*` | ✅ GPS tracking with history | Live location updates |
-| **Search** | `/api/search/*` | ✅ Multi-type search | Live search, general search |
-| **Health** | `/api/health` | ✅ System monitoring | Server status, uptime metrics |
+| Method | Endpoint | Description | Auth Required | Response |
+|--------|----------|-------------|---------------|----------|
+| **🔐 Authentication** |
+| `POST` | `/api/auth/login` | User authentication with JWT token | ❌ | JWT token + user data |
+| `POST` | `/api/auth/register` | User registration | ❌ | Success message |
+| `GET` | `/api/auth/profile` | Get current user profile | ✅ | User profile data |
+| `POST` | `/api/auth/logout` | Logout user | ✅ | Success message |
+| **🚌 Bus Management** |
+| `GET` | `/api/buses` | List all buses with pagination | ✅ | Array of buses |
+| `GET` | `/api/buses/:id` | Get specific bus details | ✅ | Bus details |
+| `POST` | `/api/buses` | Create new bus | ✅ Admin | Created bus data |
+| `PUT` | `/api/buses/:id` | Update bus information | ✅ Admin | Updated bus data |
+| `DELETE` | `/api/buses/:id` | Delete bus | ✅ Admin | Success message |
+| **🛣️ Route Management** |
+| `GET` | `/api/routes` | List all routes with filtering | ✅ | Array of routes |
+| `GET` | `/api/routes/:id` | Get specific route details | ✅ | Route details |
+| `GET` | `/api/routes/search` | Search routes by origin/destination | ✅ | Matching routes |
+| `POST` | `/api/routes` | Create new route | ✅ Admin | Created route data |
+| `PUT` | `/api/routes/:id` | Update route information | ✅ Admin | Updated route data |
+| `DELETE` | `/api/routes/:id` | Delete route | ✅ Admin | Success message |
+| **🚂 Trip Management** |
+| `GET` | `/api/trips` | List all trips with filtering | ✅ | Array of trips |
+| `GET` | `/api/trips/:id` | Get specific trip details | ✅ | Trip details |
+| `POST` | `/api/trips` | Create new trip | ✅ Operator | Created trip data |
+| `PUT` | `/api/trips/:id` | Update trip status | ✅ Driver | Updated trip data |
+| `DELETE` | `/api/trips/:id` | Cancel trip | ✅ Operator | Success message |
+| **📍 Location Tracking** |
+| `GET` | `/api/locations` | List location history | ✅ | Array of locations |
+| `GET` | `/api/locations/:busId` | Get bus location history | ✅ | Location history |
+| `POST` | `/api/locations/update` | Update bus location | ✅ Driver | Updated location |
+| `GET` | `/api/locations/nearby` | Find nearby buses | ✅ | Nearby buses |
+| **🔍 Search & Discovery** |
+| `GET` | `/api/search` | General search across all entities | ✅ | Search results |
+| `GET` | `/api/live-search` | Smart journey planning search | ✅ | Journey options |
+| `GET` | `/api/search/routes` | Search routes by criteria | ✅ | Route results |
+| `GET` | `/api/search/buses` | Search buses by criteria | ✅ | Bus results |
+| **👥 User Management** |
+| `GET` | `/api/users` | List all users | ✅ Admin | Array of users |
+| `GET` | `/api/users/:id` | Get specific user | ✅ Admin | User details |
+| `PUT` | `/api/users/:id` | Update user information | ✅ Admin | Updated user |
+| `DELETE` | `/api/users/:id` | Delete user account | ✅ Admin | Success message |
+| **📊 Analytics & Reports** |
+| `GET` | `/api/analytics/dashboard` | Get dashboard metrics | ✅ Admin | Dashboard data |
+| `GET` | `/api/analytics/buses` | Bus performance analytics | ✅ Operator | Bus metrics |
+| `GET` | `/api/analytics/routes` | Route performance analytics | ✅ Operator | Route metrics |
+| `GET` | `/api/reports/trips` | Trip reports | ✅ Operator | Trip reports |
+| **🏥 System Health** |
+| `GET` | `/health` | Basic health check | ❌ | Server status |
+| `GET` | `/api/health` | Detailed health metrics | ❌ | System metrics |
+| `GET` | `/api-docs` | Interactive API documentation | ❌ | Swagger UI |
 
 ## 🚀 Quick Start
 
@@ -145,16 +186,153 @@ curl -H "Authorization: Bearer <your_jwt_token>" \
 - **Error Sanitization** - No sensitive data exposure in error responses
 - **Role-based Access Control** - Admin, operator, driver, conductor, commuter roles
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
+
+### 📊 Production Backend Architecture
+
+![Lanka Bus Trace API - Production Backend Architecture](docs/ARCHITECTURE.md)
+
+*Complete production architecture showing all layers from client applications to external services*
+
+> **📋 Detailed Architecture**: See [Architecture Documentation](docs/ARCHITECTURE.md) for comprehensive system design details.
+
+#### 🏗️ **Architecture Layers Overview**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CLIENT APPLICATIONS                         │
+│  Web Browsers │ Mobile Apps │ Postman/Testing │ Integrations   │
+└─────────────────┬───────────────────────────────────────────────┘
+                  │
+┌─────────────────┼───────────────────────────────────────────────┐
+│              NETWORK & SECURITY LAYER                          │
+│    Namecheap Domain │ SSL/TLS Certificates │ DNS Resolution     │
+└─────────────────┼───────────────────────────────────────────────┘
+                  │
+┌─────────────────┼───────────────────────────────────────────────┐
+│                AWS CLOUD INFRASTRUCTURE                        │
+│  AWS EC2 (t2.micro) │ Security Groups │ Elastic IP (Optional)  │
+└─────────────────┼───────────────────────────────────────────────┘
+                  │
+┌─────────────────┼───────────────────────────────────────────────┐
+│               WEB SERVER LAYER                                 │
+│ Nginx Reverse Proxy │ Load Balancing │ HTTPS │ Static Files    │
+└─────────────────┼───────────────────────────────────────────────┘
+                  │
+┌─────────────────┼───────────────────────────────────────────────┐
+│               API ENDPOINTS LAYER                              │
+│  Node.js Runtime │ Express.js │ PM2 Manager │ API Gateway      │
+└─────────────────┼───────────────────────────────────────────────┘
+                  │
+┌─────────────────┼───────────────────────────────────────────────┐
+│                MIDDLEWARE LAYER                                │
+│ Rate Limiting │ CORS Protection │ Validation │ Encryption      │
+└─────────────────┼───────────────────────────────────────────────┘
+                  │
+┌─────────────────┼───────────────────────────────────────────────┐
+│              BUSINESS LOGIC LAYER                              │
+│ Controllers │ Services │ Utilities │ Helmet Security Headers   │
+└─────────────────┼───────────────────────────────────────────────┘
+                  │
+┌─────────────────┼───────────────────────────────────────────────┐
+│               DATABASE LAYER                                   │
+│    MongoDB Atlas │ Geospatial Indexing │ Data Validation      │
+└─────────────────┼───────────────────────────────────────────────┘
+                  │
+┌─────────────────┼───────────────────────────────────────────────┐
+│              EXTERNAL SERVICES                                 │
+│  MongoDB Atlas │ GitHub Repository │ Swagger Documentation     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+The Lanka Bus Trace API follows a comprehensive multi-layered architecture designed for scalability, security, and maintainability:
+
+#### 🖥️ **Client Layer**
+- **Web Browsers**: Admin dashboard and management interfaces
+- **Mobile Apps**: Driver and commuter applications  
+- **API Testing Tools**: Postman for development and testing
+- **Third-party Integrations**: External system connections
+
+#### 🌐 **Network & Security Layer**
+- **Namecheap Domain**: Custom domain management (ruvindu-dulaksha.me)
+- **SSL/TLS Certificate**: Let's Encrypt for HTTPS encryption
+- **DNS Resolution**: Proper domain to IP mapping
+
+#### ☁️ **AWS Cloud Infrastructure**
+- **AWS EC2 (t2.micro)**: Free tier virtual server hosting
+- **Security Groups**: Firewall rules and access control
+- **Elastic IP**: Optional static IP address assignment
+
+#### 🔧 **Web Server Layer**
+- **Nginx Reverse Proxy**: Load balancing and SSL termination
+- **Load Balancing**: Traffic distribution (future scalability)
+- **HTTPS Termination**: SSL certificate management
+- **Static File Serving**: Efficient asset delivery
+
+#### 🚀 **API Endpoints Layer**
+- **Node.js Runtime**: JavaScript server environment
+- **Express.js Framework**: RESTful API development
+- **PM2 Process Manager**: Application monitoring and auto-restart
+- **API Gateway**: Centralized request handling
+
+#### 🛡️ **Middleware Layer**
+- **Rate Limiting**: DDoS protection and abuse prevention
+- **CORS Protection**: Cross-origin request security
+- **Request Validation**: Input sanitization and validation
+- **Encrypt Password**: bcrypt hashing for security
+
+#### 🎯 **API Endpoints Layer**
+- **Controllers**: Business logic and request handling
+- **Services**: Data processing and business rules
+- **Utilities**: Helper functions and processing
+- **Helmet Security**: HTTP header security
+
+#### 💾 **Business Logic Layer**
+- **MongoDB Atlas**: Cloud database cluster
+- **Services**: Authentication, validation, geospatial queries
+- **Swagger**: OpenAPI documentation generation
+
+#### 🌍 **External Services**
+- **MongoDB Atlas**: Cloud database hosting
+- **GitHub Repository**: Source code management
+- **Swagger/OpenAPI**: API documentation hosting
+
+### 📁 **Project Structure**
 
 ```
 📁 src/
 ├── 🎮 controllers/     # Business logic and request handling
+│   ├── authController.js      # Authentication & authorization
+│   ├── busController.js       # Bus fleet management
+│   ├── routeController.js     # Route management
+│   ├── tripController.js      # Trip scheduling & monitoring
+│   ├── locationController.js  # GPS tracking & history
+│   └── searchController.js    # Search & discovery
 ├── 🗃️ models/          # MongoDB schemas and data models
+│   ├── User.js               # User accounts & roles
+│   ├── Bus.js                # Bus fleet information
+│   ├── Route.js              # Route definitions
+│   ├── Trip.js               # Trip scheduling data
+│   └── Location.js           # GPS tracking history
 ├── 🛣️ routes/          # API endpoint definitions
+│   ├── auth.js               # Authentication routes
+│   ├── buses.js              # Bus management routes
+│   ├── routes.js             # Route management routes
+│   ├── trips.js              # Trip management routes
+│   ├── locations.js          # Location tracking routes
+│   └── search.js             # Search & discovery routes
 ├── 🛡️ middleware/      # Security, validation, and authentication
+│   ├── auth.js               # JWT authentication middleware
+│   ├── validation.js         # Request validation
+│   ├── errorHandler.js       # Global error handling
+│   └── notFound.js           # 404 error handling
 ├── ⚙️ config/          # Database connection and logging setup
+│   ├── database.js           # MongoDB connection
+│   ├── swagger.js            # API documentation config
+│   └── logger.js             # Application logging
 └── 📊 data/            # Sample datasets and test data
+    ├── sample-data.json      # Basic test data
+    └── extended-sample-data.json # Comprehensive test data
 ```
 
 ## 🏆 NTC Compliance
