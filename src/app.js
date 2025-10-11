@@ -50,32 +50,54 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS configuration - Updated for Swagger UI compatibility
+// CORS configuration - Comprehensive fix for Swagger UI
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
     if (!origin) return callback(null, true);
     
-    // Allow same origin requests for Swagger UI
+    // Define allowed origins
     const allowedOrigins = [
       'https://api.ruvindu-dulaksha.me',
       'https://ruvindu-dulaksha.me',
-      ...(process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'])
+      'http://localhost:3000',
+      'http://localhost:3001'
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Allow same-origin requests and API documentation
+    if (allowedOrigins.includes(origin) || origin.includes('ruvindu-dulaksha.me')) {
       callback(null, true);
     } else {
-      callback(null, true); // Allow all origins for API documentation
+      // For development and API documentation, allow all origins
+      callback(null, true);
     }
   },
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'Accept', 'Origin', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-API-Key', 
+    'Accept', 
+    'Origin', 
+    'X-Requested-With',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods'
+  ],
   exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'Link', 'ETag', 'Last-Modified']
 };
 app.use(cors(corsOptions));
+
+// Explicit OPTIONS handler for preflight requests
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS,HEAD');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-API-Key,Accept,Origin,X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.status(200).end();
+});
 
 // Enhanced RESTful headers middleware
 app.use((req, res, next) => {
