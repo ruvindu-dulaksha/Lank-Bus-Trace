@@ -54,7 +54,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   const usersWithStats = users.map(user => ({
     ...user.toObject(),
     accountAge: Math.floor((new Date() - user.createdAt) / (1000 * 60 * 60 * 24)),
-    lastActiveAgo: user.lastLogin ? Math.floor((new Date() - user.lastLogin) / (1000 * 60 * 60 * 24)) : null,
+    lastActiveAgo: user.lastLogin ? Math.floor((new Date() - user.lastLogin) / (1000 * 60 * 60 * 24)) : 0,
     hasApiKey: !!user.apiKey
   }));
 
@@ -93,7 +93,7 @@ export const getUser = asyncHandler(async (req, res) => {
   const userData = {
     ...user.toObject(),
     accountAge: Math.floor((new Date() - user.createdAt) / (1000 * 60 * 60 * 24)),
-    lastActiveAgo: user.lastLogin ? Math.floor((new Date() - user.lastLogin) / (1000 * 60 * 60 * 24)) : null,
+    lastActiveAgo: user.lastLogin ? Math.floor((new Date() - user.lastLogin) / (1000 * 60 * 60 * 24)) : 0,
     hasApiKey: !!user.apiKey,
     totalRefreshTokens: user.refreshTokens ? user.refreshTokens.length : 0
   };
@@ -118,7 +118,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
   const userData = {
     ...user.toObject(),
     accountAge: Math.floor((new Date() - user.createdAt) / (1000 * 60 * 60 * 24)),
-    lastActiveAgo: user.lastLogin ? Math.floor((new Date() - user.lastLogin) / (1000 * 60 * 60 * 24)) : null,
+    lastActiveAgo: user.lastLogin ? Math.floor((new Date() - user.lastLogin) / (1000 * 60 * 60 * 24)) : 0,
     hasApiKey: !!user.apiKey
   };
 
