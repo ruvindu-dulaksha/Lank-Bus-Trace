@@ -6,20 +6,21 @@ import logger from '../config/logger.js';
 export const authenticateJWT = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
+    const cookieToken = req.cookies?.token; // Get token from cookie
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access token required. Please provide a valid Bearer token in the Authorization header.'
-      });
+    let token = null;
+    
+    // Check for Bearer token first, then cookie
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    } else if (cookieToken) {
+      token = cookieToken;
     }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Access token is empty.'
+        message: 'Access token required. Please provide a valid Bearer token in the Authorization header or login cookie.'
       });
     }
 

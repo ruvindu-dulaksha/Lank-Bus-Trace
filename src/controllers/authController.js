@@ -47,7 +47,12 @@ export const register = asyncHandler(async (req, res) => {
 
   logger.info(`New user registered: ${username} (${role})`);
 
-  res.status(201).json({
+  res.status(201).cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }).json({
     success: true,
     message: 'User registered successfully',
     data: {
@@ -82,7 +87,12 @@ export const login = asyncHandler(async (req, res) => {
 
     logger.info(`User logged in: ${user.username}`);
 
-    res.json({
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }).json({
       success: true,
       message: 'Login successful',
       data: {
@@ -294,7 +304,12 @@ export const logout = asyncHandler(async (req, res) => {
 
   logger.info(`User logged out: ${req.user.username}`);
 
-  res.status(200).json({
+  // Clear the authentication cookie
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }).status(200).json({
     success: true,
     message: 'Logged out successfully'
   });

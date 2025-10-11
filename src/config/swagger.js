@@ -4,7 +4,28 @@ export const swaggerOptions = {
     info: {
       title: 'Lanka Bus Trace API',
       version: '1.0.0',
-      description: 'Real-time inter-provincial bus tracking system for Sri Lanka. NTC compliant tracking-only service - no booking functionality.',
+      description: `
+## Smart Inter-Provincial Bus Tracking System for Sri Lanka
+
+### Features:
+- 🚌 **Smart Journey Planning**: Find buses for your actual travel route (not just nearby buses)
+- 🔐 **Dual Authentication**: JWT tokens and HTTP-only cookies support
+- 📍 **Real-time Tracking**: Live GPS location updates
+- 🛣️ **Route Discovery**: Find available routes between cities
+- 🔍 **Intelligent Search**: Search across buses, routes, and locations
+- 📊 **Analytics**: Fleet performance and usage statistics
+
+### NTC Compliance:
+- Tracking-only service (no booking functionality)
+- Government-approved inter-provincial bus monitoring
+- Standardized route and pricing information
+
+### Quick Start:
+1. **Login**: Use \`POST /auth/login\` with test credentials
+2. **Journey Planning**: Use \`GET /live-search?from=Colombo&to=Kandy\`
+3. **Route Discovery**: Use \`GET /routes?origin=Colombo&destination=Kandy\`
+4. **Search**: Use \`GET /search?q=Colombo&type=route\`
+      `,
       contact: {
         name: 'Lanka Bus Trace',
         url: 'https://www.lankabustrace.lk',
@@ -30,12 +51,20 @@ export const swaggerOptions = {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT'
+          bearerFormat: 'JWT',
+          description: 'JWT token authentication - use the token from login response'
+        },
+        cookieAuth: {
+          type: 'apiKey',
+          in: 'cookie',
+          name: 'token',
+          description: 'Cookie-based authentication - automatically set after login'
         },
         apiKeyAuth: {
           type: 'apiKey',
           in: 'header',
-          name: 'X-API-Key'
+          name: 'X-API-Key',
+          description: 'API Key authentication for operators and admins'
         }
       },
       schemas: {
@@ -231,41 +260,108 @@ export const swaggerOptions = {
               }
             }
           }
+        },
+        JourneySearchResult: {
+          type: 'object',
+          description: 'Smart journey search results showing buses relevant to user travel',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true
+            },
+            message: {
+              type: 'string',
+              example: 'Found 3 available trips'
+            },
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  routeId: {
+                    type: 'string',
+                    example: '507f1f77bcf86cd799439011'
+                  },
+                  routeName: {
+                    type: 'string',
+                    example: 'Colombo - Kandy Express'
+                  },
+                  origin: {
+                    type: 'string',
+                    example: 'Colombo'
+                  },
+                  destination: {
+                    type: 'string',
+                    example: 'Kandy'
+                  },
+                  departureTime: {
+                    type: 'string',
+                    example: '09:00'
+                  },
+                  estimatedArrival: {
+                    type: 'string',
+                    example: '12:00'
+                  }
+                }
+              }
+            },
+            searchCriteria: {
+              type: 'object',
+              properties: {
+                from: {
+                  type: 'string',
+                  example: 'Colombo'
+                },
+                to: {
+                  type: 'string',
+                  example: 'Kandy'
+                },
+                date: {
+                  type: 'string',
+                  example: '2025-10-11'
+                }
+              }
+            }
+          }
         }
       }
     },
     tags: [
       {
         name: 'Authentication',
-        description: 'User authentication and authorization'
+        description: 'User authentication and authorization with JWT tokens and cookies'
+      },
+      {
+        name: 'Search',
+        description: 'Smart journey planning and search capabilities - find buses for your actual travel needs'
       },
       {
         name: 'System',
-        description: 'System configuration and health'
+        description: 'System configuration and health monitoring'
       },
       {
         name: 'Routes',
-        description: 'Inter-provincial bus routes'
+        description: 'Inter-provincial bus routes and journey planning'
       },
       {
         name: 'Buses',
-        description: 'Bus fleet management and tracking'
+        description: 'Bus fleet management and real-time tracking'
       },
       {
         name: 'Trips',
-        description: 'Trip scheduling and tracking'
+        description: 'Trip scheduling and live tracking'
       },
       {
         name: 'Locations',
-        description: 'Real-time GPS location tracking'
+        description: 'Real-time GPS location tracking and proximity search'
       },
       {
         name: 'Analytics',
-        description: 'Fleet analytics and reporting'
+        description: 'Fleet analytics and performance reporting'
       },
       {
         name: 'Users',
-        description: 'User management and roles'
+        description: 'User management and role-based access control'
       }
     ]
   },

@@ -151,8 +151,8 @@ export const generalSearch = async (req, res) => {
     const searchRegex = new RegExp(q, 'i');
     const results = {};
 
-    // Search buses if no type specified or type is 'bus'
-    if (!type || type === 'bus') {
+    // Search buses if no type specified or type is 'bus' or type is 'all'
+    if (!type || type === 'bus' || type === 'all') {
       const buses = await Bus.find({
         $or: [
           { busNumber: searchRegex },
@@ -164,22 +164,24 @@ export const generalSearch = async (req, res) => {
       results.buses = buses;
     }
 
-    // Search routes if no type specified or type is 'route'
-    if (!type || type === 'route') {
+    // Search routes if no type specified or type is 'route' or type is 'all'
+    if (!type || type === 'route' || type === 'all') {
       const routes = await Route.find({
         $or: [
           { routeName: searchRegex },
           { routeNumber: searchRegex },
           { origin: searchRegex },
-          { destination: searchRegex }
+          { destination: searchRegex },
+          { 'origin.city': searchRegex },
+          { 'destination.city': searchRegex }
         ]
       }).limit(parseInt(limit));
       
       results.routes = routes;
     }
 
-    // Search locations if no type specified or type is 'location'
-    if (!type || type === 'location') {
+    // Search locations if no type specified or type is 'location' or type is 'all'
+    if (!type || type === 'location' || type === 'all') {
       const locations = await Location.find({
         $or: [
           { name: searchRegex },
@@ -191,8 +193,8 @@ export const generalSearch = async (req, res) => {
       results.locations = locations;
     }
 
-    // Search users if no type specified or type is 'user' (admin only)
-    if ((!type || type === 'user') && req.user?.role === 'admin') {
+    // Search users if no type specified or type is 'user' or type is 'all' (admin only)
+    if ((!type || type === 'user' || type === 'all') && req.user?.role === 'admin') {
       const users = await User.find({
         $or: [
           { username: searchRegex },

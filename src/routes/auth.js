@@ -81,7 +81,8 @@ router.post('/register', registerLimiter, authSlowDown, validateRegister, regist
  * @swagger
  * /auth/login:
  *   post:
- *     summary: Login user
+ *     summary: Login user with JWT token and cookie support
+ *     description: Authenticate user and receive JWT token. Response sets both token in body and httpOnly cookie for dual authentication support.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -96,16 +97,66 @@ router.post('/register', registerLimiter, authSlowDown, validateRegister, regist
  *               emailOrUsername:
  *                 type: string
  *                 description: Email address or username
+ *                 example: "testuser"
  *               password:
  *                 type: string
  *                 description: User password
+ *                 example: "Test123!"
+ *           examples:
+ *             valid_user:
+ *               summary: Valid test user credentials
+ *               value:
+ *                 emailOrUsername: "testuser"
+ *                 password: "Test123!"
+ *             email_login:
+ *               summary: Login with email
+ *               value:
+ *                 emailOrUsername: "test@example.com"
+ *                 password: "Test123!"
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login successful - JWT token returned and cookie set
+ *         headers:
+ *           Set-Cookie:
+ *             description: HTTP-only authentication cookie (24h expiration)
+ *             schema:
+ *               type: string
+ *               example: "token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; SameSite=Lax; Max-Age=86400"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Login successful"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *                     token:
+ *                       type: string
+ *                       description: JWT token for Bearer authentication
+ *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGU5ZmNlZmFjNzVmYzJiMzAxODY4NjQiLCJpYXQiOjE3NjAxNzQ5NzksImV4cCI6MTc2MDI2MTM3OX0.nS_wyUKdr0d94cV4ncao8lmYIjPNJxQuTNs8h3L5SVY"
  *       401:
  *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid credentials"
  *       429:
- *         description: Too many login attempts
+ *         description: Too many login attempts (rate limited)
  */
 router.post('/login', loginLimiter, authSlowDown, validateLogin, login);
 
