@@ -140,12 +140,39 @@ Role: commuter
 
 ## 📚 API Documentation
 
-### Interactive Documentation
+### 📊 Interactive Swagger Documentation
+
+![Swagger API Documentation](docs/swagger-screenshot.md)
+
+*Complete interactive API documentation with authentication system and all endpoints*
+
+The Lanka Bus Trace API features **comprehensive Swagger/OpenAPI 3.0 documentation** accessible at `http://localhost:3000/api-docs`. The documentation includes:
+
+#### 🔐 **Authentication System**
+- **User Registration & Login** - Complete user management workflow
+- **Password Management** - Forgot/reset password functionality  
+- **API Key Generation** - Programmatic access tokens
+- **Profile Management** - User profile CRUD operations
+- **Token Management** - JWT refresh and logout capabilities
+
+#### 🚀 **Interactive Features**
+- **Live Testing** - Test all endpoints directly from the documentation
+- **Authorization Support** - Built-in "Authorize" button for JWT tokens
+- **Real-time Examples** - Working request/response examples
+- **Error Documentation** - Comprehensive error response examples
+- **Schema Validation** - Complete request/response schema definitions
+
+#### 📋 **Developer Information**
+- **Student ID**: COBSCCOMP241P-018
+- **Developer**: K.D.R. Dulaksha  
+- **Project Context**: Academic coursework demonstrating advanced API development
+
+### 🌐 Live Documentation URLs
 - **Swagger UI**: `http://localhost:3000/api-docs`
-- **API Health**: `http://localhost:3000/api/health`
+- **API Health**: `http://localhost:3000/api/health`  
 - **Main Health**: `http://localhost:3000/health`
 
-### Quick Examples
+### 🔧 Quick API Testing
 
 ```bash
 # Login and get token
