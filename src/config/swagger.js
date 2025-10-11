@@ -63,38 +63,50 @@ This API demonstrates mastery of:
 
 ## 🚀 Quick Start Guide
 
-### 1. Authentication
-\`\`\`
-POST /api/auth/login
-{
-  "emailOrUsername": "testuser",
-  "password": "Test123!"
-}
+### 1. 🔓 Test Without Authentication (Public Endpoints)
+\`\`\`bash
+# Get system information
+curl https://ruvindu-dulaksha.me/health
+
+# Search routes between cities
+curl "https://ruvindu-dulaksha.me/api/routes/search?from=Colombo&to=Kandy"
+
+# Get available cities
+curl https://ruvindu-dulaksha.me/api/routes/cities
 \`\`\`
 
-### 2. Journey Planning
-\`\`\`
-GET /api/live-search?from=Colombo&to=Kandy&date=2025-10-11&time=09:00
+### 2. 🔐 Authentication Required
+\`\`\`bash
+# Login to get JWT token
+curl -X POST https://ruvindu-dulaksha.me/api/auth/login \\
+  -H "Content-Type: application/json" \\
+  -d '{"emailOrUsername": "Dulaksha", "password": "DulaBoy@2001"}'
+
+# Use token in subsequent requests
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \\
+  https://ruvindu-dulaksha.me/api/buses
 \`\`\`
 
-### 3. Route Discovery
-\`\`\`
-GET /api/routes?origin=Colombo&destination=Kandy
+### 3. 🎯 Journey Planning
+\`\`\`bash
+# Smart journey search
+curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=2025-10-12&time=09:00"
 \`\`\`
 
-### 4. Search Operations
-\`\`\`
-GET /api/search?q=Colombo&type=route&limit=5
-\`\`\`
+### 4. 🔧 Using This Swagger UI
+1. Click **"Authorize"** button above
+2. Enter your JWT token (get from login response)
+3. Test any endpoint with the **"Try it out"** button
+4. Check **"Schemas"** section for request/response formats
 
 ---
 
-## 🔐 Test Credentials
-- **Username**: testuser
-- **Password**: Test123!
-- **Role**: commuter
+## 🔐 Admin Test Credentials
+- **Username**: Dulaksha
+- **Password**: DulaBoy@2001
+- **Role**: admin
 
-*Note: Use the "Authorize" button above to test protected endpoints*
+*🔒 Use the "Authorize" button above to test protected endpoints*
 
 ---
 
@@ -112,8 +124,12 @@ GET /api/search?q=Colombo&type=route&limit=5
     },
     servers: [
       {
-        url: 'https://api.ruvindu-dulaksha.me',
+        url: 'https://ruvindu-dulaksha.me',
         description: 'Production server (AWS EC2 with SSL)'
+      },
+      {
+        url: 'https://ruvindu-dulaksha.me/api',
+        description: 'Production API Base URL'
       },
       {
         url: 'http://localhost:3000',
@@ -126,7 +142,8 @@ GET /api/search?q=Colombo&type=route&limit=5
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'JWT token authentication - use the token from login response'
+          description: 'JWT token authentication - use the token from login response',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         },
         cookieAuth: {
           type: 'apiKey',
@@ -139,6 +156,56 @@ GET /api/search?q=Colombo&type=route&limit=5
           in: 'header',
           name: 'X-API-Key',
           description: 'API Key authentication for operators and admins'
+        }
+      },
+      parameters: {
+        PageParam: {
+          name: 'page',
+          in: 'query',
+          description: 'Page number for pagination',
+          schema: {
+            type: 'integer',
+            minimum: 1,
+            default: 1,
+            example: 1
+          }
+        },
+        LimitParam: {
+          name: 'limit', 
+          in: 'query',
+          description: 'Number of items per page',
+          schema: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
+            default: 20,
+            example: 20
+          }
+        }
+      },
+      examples: {
+        LoginRequest: {
+          summary: 'Admin Login Example',
+          value: {
+            emailOrUsername: 'Dulaksha',
+            password: 'DulaBoy@2001'
+          }
+        },
+        LoginResponse: {
+          summary: 'Successful Login Response',
+          value: {
+            success: true,
+            message: 'Login successful',
+            data: {
+              user: {
+                _id: '68eaabc2ab5893e1ff1e2b0b',
+                username: 'Dulaksha',
+                email: 'ruvindu123456@gmail.com',
+                role: 'admin'
+              },
+              token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+            }
+          }
         }
       },
       schemas: {
@@ -839,12 +906,40 @@ GET /api/search?q=Colombo&type=route&limit=5
         description: 'Real-time GPS location tracking and proximity search'
       },
       {
-        name: 'Analytics',
-        description: 'Fleet analytics and performance reporting'
-      },
-      {
         name: 'Users',
         description: 'User management and role-based access control'
+      },
+      {
+        name: 'Pricing',
+        description: 'Fare calculation and pricing rules management'
+      },
+      {
+        name: 'Seasons',
+        description: 'Seasonal pricing and peak/off-peak fare management'
+      },
+      {
+        name: 'Dashboard',
+        description: 'Administrative dashboard and overview statistics'
+      },
+      {
+        name: 'Analytics',
+        description: 'Fleet performance analytics and operational insights'
+      },
+      {
+        name: 'Reports',
+        description: 'Trip reports, revenue reports, and business intelligence'
+      },
+      {
+        name: 'Driver',
+        description: 'Driver-specific endpoints for trip management'
+      },
+      {
+        name: 'Conductor',
+        description: 'Conductor-specific endpoints for trip assistance'
+      },
+      {
+        name: 'Operator',
+        description: 'Bus operator management and fleet oversight'
       }
     ]
   },

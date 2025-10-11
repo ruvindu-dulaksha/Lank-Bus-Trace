@@ -1,0 +1,373 @@
+{
+  "info": {
+    "name": "Lanka Bus Trace API - MS Collection",
+    "description": "🚌 **Lanka Bus Trace API - Microservices Collection**\n\n**Developer**: K.D.R. Dulaksha (COBSCCOMP241P-018)\n**Institution**: Coventry University\n**Production URL**: https://ruvindu-dulaksha.me\n\n## 🔐 Authentication Setup\n1. First, register or login to get your JWT token\n2. Copy the token from the login response\n3. Set it in the Authorization tab as Bearer Token for protected endpoints\n\n## 📋 Test Credentials\n- **Username**: testuser\n- **Password**: Test123!\n- **Role**: commuter\n\n## 🚀 Quick Start\n1. Run \"Auth → Login\" to get your token\n2. Copy token to environment variable or authorization header\n3. Test any endpoint in the collection\n\n## 📚 Categories\n- **🔑 Authentication**: Login, register, profile management\n- **🚌 Buses**: Fleet management and tracking\n- **🛣️ Routes**: Inter-provincial route information\n- **🎯 Trips**: Schedule and trip management\n- **📍 Locations**: GPS tracking and location services\n- **🔍 Search**: Smart journey planning and discovery\n- **👥 Users**: User management (admin only)\n- **💰 Pricing**: Fare calculation and rules\n- **📊 Analytics**: Performance metrics and reports\n- **⚙️ System**: Health checks and configuration\n\n## 🎓 Academic Project\nThis collection demonstrates comprehensive API testing capabilities for enterprise-level bus tracking system developed as part of Advanced Software Development coursework.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "lanka-bus-trace-ms-collection"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://ruvindu-dulaksha.me",
+      "type": "string"
+    },
+    {
+      "key": "api_url",
+      "value": "{{base_url}}/api",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "route_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bus_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trip_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏠 System Information",
+      "item": [
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Get basic API information and available endpoints"
+          }
+        },
+        {
+          "name": "API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-docs",
+              "host": ["{{base_url}}"],
+              "path": ["api-docs"]
+            },
+            "description": "Access the Swagger UI documentation for the API"
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "System health status check"
+          }
+        },
+        {
+          "name": "API Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/health",
+              "host": ["{{api_url}}"],
+              "path": ["health"]
+            },
+            "description": "Detailed API health with database and system information"
+          }
+        }
+      ],
+      "description": "System information and health check endpoints"
+    },
+    {
+      "name": "🔑 Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.to.have.status(201)) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.environment.set('jwt_token', response.data.token);",
+                  "    }",
+                  "    if (response.data && response.data.user) {",
+                  "        pm.environment.set('user_id', response.data.user._id || response.data.user.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123!\",\n  \"role\": \"commuter\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/auth/register",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.to.have.status(200)) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.environment.set('jwt_token', response.data.token);",
+                  "    }",
+                  "    if (response.data && response.data.user) {",
+                  "        pm.environment.set('user_id', response.data.user._id || response.data.user.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrUsername\": \"testuser\",\n  \"password\": \"Test123!\"\n}"
+            },
+            "url": {
+              "raw": "{{api_url}}/auth/login",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with email/username and password to get JWT token"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "url": "{{api_url}}/auth/forgot-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "url": "{{api_url}}/auth/reset-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset-token\",\n  \"password\": \"NewPassword123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "url": "{{api_url}}/auth/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"OldPassword123!\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{api_url}}/auth/logout"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{api_url}}/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"refresh-token\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "url": "{{api_url}}/auth/me"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "url": "{{api_url}}/auth/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newusername\",\n  \"fullName\": \"New Full Name\",\n  \"phoneNumber\": \"1234567890\"\n}"
+            }
+          }
+        }
+      ],
+      "description": "User authentication and account management endpoints"
+    },
+    {
+      "name": "🚌 Buses",
+      "item": [
+        {
+          "name": "Get All Buses",
+          "request": {
+            "method": "GET",
+            "url": "{{api_url}}/buses"
+          }
+        },
+        {
+          "name": "Get Bus by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{api_url}}/buses/:id"
+          }
+        },
+        {
+          "name": "Create Bus",
+          "request": {
+            "method": "POST",
+            "url": "{{api_url}}/buses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationNumber\": \"ABC-1234\",\n  \"busType\": \"luxury\",\n  \"operator\": \"Operator Name\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Bus",
+          "request": {
+            "method": "PUT",
+            "url": "{{api_url}}/buses/:id",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"busType\": \"semi-luxury\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Bus",
+          "request": {
+            "method": "DELETE",
+            "url": "{{api_url}}/buses/:id"
+          }
+        }
+      ],
+      "description": "Bus management and tracking endpoints"
+    },
+    {
+      "name": "🛣️ Routes",
+      "item": [
+        {
+          "name": "Get All Routes",
+          "request": {
+            "method": "GET",
+            "url": "{{api_url}}/routes"
+          }
+        },
+        {
+          "name": "Get Route by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{api_url}}/routes/:id"
+          }
+        },
+        {
+          "name": "Create Route",
+          "request": {
+            "method": "POST",
+            "url": "{{api_url}}/routes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeNumber\": \"R001\",\n  \"origin\": \"City A\",\n  \"destination\": \"City B\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Route",
+          "request": {
+            "method": "PUT",
+            "url": "{{api_url}}/routes/:id",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destination\": \"City C\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Route",
+          "request": {
+            "method": "DELETE",
+            "url": "{{api_url}}/routes/:id"
+          }
+        }
+      ],
+      "description": "Route management and tracking endpoints"
+    }
+  ]
+}

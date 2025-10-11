@@ -1,0 +1,1414 @@
+{
+  "info": {
+    "name": "Lanka Bus Trace API - Complete Collection",
+    "description": "🚌 **Lanka Bus Trace API - Complete Collection**\n\n**Production URL**: https://ruvindu-dulaksha.me\n**API Base URL**: https://ruvindu-dulaksha.me/api\n\n## 🔐 Admin Credentials\n- **Username**: Dulaksha\n- **Email**: ruvindu123456@gmail.com\n- **Password**: DulaBoy@2001\n- **Role**: admin\n\n## 🚀 Quick Start\n1. Use \"Auth → Login (Admin)\" to get your token\n2. Token will be automatically set for subsequent requests\n3. Test any endpoint in the collection\n\n## 📚 All API Categories Included\n- **🏠 System**: Health checks and info\n- **🔑 Authentication**: Complete auth flow\n- **🚌 Buses**: Fleet management\n- **🛣️ Routes**: Route management\n- **🎯 Trips**: Trip scheduling\n- **📍 Locations**: GPS tracking\n- **👥 Users**: User management\n- **💰 Pricing**: Fare system\n- **🌟 Seasons**: Seasonal pricing\n- **🔍 Search**: Smart search\n- **📊 Dashboard**: Admin dashboard\n- **📈 Analytics**: Performance data\n- **📋 Reports**: System reports\n- **⚙️ System Config**: Configuration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "lanka-bus-trace-complete"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://ruvindu-dulaksha.me",
+      "type": "string"
+    },
+    {
+      "key": "api_url",
+      "value": "{{base_url}}/api",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "route_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bus_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trip_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏠 System Information",
+      "item": [
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Get basic API information and available endpoints"
+          }
+        },
+        {
+          "name": "API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-docs",
+              "host": ["{{base_url}}"],
+              "path": ["api-docs"]
+            },
+            "description": "Access the Swagger UI documentation for the API"
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "System health status check"
+          }
+        },
+        {
+          "name": "API Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/health",
+              "host": ["{{api_url}}"],
+              "path": ["health"]
+            },
+            "description": "Detailed API health with database and system information"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔑 Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.to.have.status(201)) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.environment.set('jwt_token', response.data.token);",
+                  "    }",
+                  "    if (response.data && response.data.user) {",
+                  "        pm.environment.set('user_id', response.data.user._id || response.data.user.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123!\",\n  \"role\": \"commuter\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/auth/register",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account"
+          }
+        },
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.to.have.status(200)) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.environment.set('jwt_token', response.data.token);",
+                  "    }",
+                  "    if (response.data && response.data.user) {",
+                  "        pm.environment.set('user_id', response.data.user._id || response.data.user.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrUsername\": \"Dulaksha\",\n  \"password\": \"DulaBoy@2001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/auth/login",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as admin user"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.to.have.status(200)) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.environment.set('jwt_token', response.data.token);",
+                  "    }",
+                  "    if (response.data && response.data.user) {",
+                  "        pm.environment.set('user_id', response.data.user._id || response.data.user.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrUsername\": \"testuser\",\n  \"password\": \"Test123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/auth/login",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with email/username and password to get JWT token"
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/auth/me",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current user profile"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newusername\",\n  \"fullName\": \"New Full Name\",\n  \"phoneNumber\": \"1234567890\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/auth/profile",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Update current user profile"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"OldPassword123!\",\n  \"newPassword\": \"NewPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/auth/change-password",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "change-password"]
+            },
+            "description": "Change password for logged in user"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/auth/logout",
+              "host": ["{{api_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout current user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚌 Buses",
+      "item": [
+        {
+          "name": "Get All Buses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/buses?page=1&limit=20",
+              "host": ["{{api_url}}"],
+              "path": ["buses"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all buses with pagination"
+          }
+        },
+        {
+          "name": "Search Buses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/buses/search?search=ABC&busType=luxury",
+              "host": ["{{api_url}}"],
+              "path": ["buses", "search"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "ABC"
+                },
+                {
+                  "key": "busType",
+                  "value": "luxury"
+                }
+              ]
+            },
+            "description": "Search buses by criteria"
+          }
+        },
+        {
+          "name": "Get Nearby Buses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/buses/nearby?latitude=6.9271&longitude=79.8612&radius=5000",
+              "host": ["{{api_url}}"],
+              "path": ["buses", "nearby"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "6.9271"
+                },
+                {
+                  "key": "longitude",
+                  "value": "79.8612"
+                },
+                {
+                  "key": "radius",
+                  "value": "5000"
+                }
+              ]
+            },
+            "description": "Find buses near coordinates"
+          }
+        },
+        {
+          "name": "Get Fleet Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/buses/fleet-status",
+              "host": ["{{api_url}}"],
+              "path": ["buses", "fleet-status"]
+            },
+            "description": "Get fleet-wide status overview"
+          }
+        },
+        {
+          "name": "Get Bus by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/buses/{{bus_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["buses", "{{bus_id}}"]
+            },
+            "description": "Get specific bus details"
+          }
+        },
+        {
+          "name": "Create Bus",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationNumber\": \"NA-1234\",\n  \"busNumber\": \"B001\",\n  \"busType\": \"luxury\",\n  \"operator\": \"Lankan Express\",\n  \"capacity\": 45,\n  \"model\": \"Volvo B7R\",\n  \"yearOfManufacture\": 2020,\n  \"fuelType\": \"diesel\",\n  \"amenities\": [\"air_conditioning\", \"wifi\", \"reclining_seats\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/buses",
+              "host": ["{{api_url}}"],
+              "path": ["buses"]
+            },
+            "description": "Create a new bus"
+          }
+        },
+        {
+          "name": "Update Bus",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"busType\": \"semi-luxury\",\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/buses/{{bus_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["buses", "{{bus_id}}"]
+            },
+            "description": "Update bus information"
+          }
+        },
+        {
+          "name": "Delete Bus",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/buses/{{bus_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["buses", "{{bus_id}}"]
+            },
+            "description": "Delete a bus"
+          }
+        },
+        {
+          "name": "Update Bus Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 6.9271,\n  \"longitude\": 79.8612,\n  \"heading\": 45,\n  \"speed\": 60,\n  \"accuracy\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/buses/{{bus_id}}/location",
+              "host": ["{{api_url}}"],
+              "path": ["buses", "{{bus_id}}", "location"]
+            },
+            "description": "Update bus GPS location"
+          }
+        },
+        {
+          "name": "Get Bus Location History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/buses/{{bus_id}}/location-history?limit=100",
+              "host": ["{{api_url}}"],
+              "path": ["buses", "{{bus_id}}", "location-history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "Get bus location history"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛣️ Routes",
+      "item": [
+        {
+          "name": "Get All Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/routes?page=1&limit=20",
+              "host": ["{{api_url}}"],
+              "path": ["routes"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all routes with pagination"
+          }
+        },
+        {
+          "name": "Search Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/routes/search?from=Colombo&to=Kandy",
+              "host": ["{{api_url}}"],
+              "path": ["routes", "search"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "Colombo"
+                },
+                {
+                  "key": "to",
+                  "value": "Kandy"
+                }
+              ]
+            },
+            "description": "Search routes between cities"
+          }
+        },
+        {
+          "name": "Live Route Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/routes/live-search?from=Colombo&to=Kandy&date=2025-10-12",
+              "host": ["{{api_url}}"],
+              "path": ["routes", "live-search"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "Colombo"
+                },
+                {
+                  "key": "to",
+                  "value": "Kandy"
+                },
+                {
+                  "key": "date",
+                  "value": "2025-10-12"
+                }
+              ]
+            },
+            "description": "Live search with real-time data"
+          }
+        },
+        {
+          "name": "Get Available Cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/routes/cities",
+              "host": ["{{api_url}}"],
+              "path": ["routes", "cities"]
+            },
+            "description": "Get list of available cities"
+          }
+        },
+        {
+          "name": "Get Price Estimate",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/routes/pricing/Colombo/Kandy",
+              "host": ["{{api_url}}"],
+              "path": ["routes", "pricing", "Colombo", "Kandy"]
+            },
+            "description": "Get price estimate for route"
+          }
+        },
+        {
+          "name": "Get Route by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/routes/{{route_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["routes", "{{route_id}}"]
+            },
+            "description": "Get specific route details"
+          }
+        },
+        {
+          "name": "Create Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeNumber\": \"R001\",\n  \"routeName\": \"Colombo - Kandy Express\",\n  \"origin\": \"Colombo\",\n  \"destination\": \"Kandy\",\n  \"distance\": 115,\n  \"estimatedDuration\": 180,\n  \"basePrice\": 250,\n  \"status\": \"active\",\n  \"stops\": [\n    {\n      \"name\": \"Colombo Fort\",\n      \"order\": 1,\n      \"coordinates\": [6.9344, 79.8428]\n    },\n    {\n      \"name\": \"Kandy Bus Stand\",\n      \"order\": 2,\n      \"coordinates\": [7.2906, 80.6337]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/routes",
+              "host": ["{{api_url}}"],
+              "path": ["routes"]
+            },
+            "description": "Create a new route"
+          }
+        },
+        {
+          "name": "Update Route",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"basePrice\": 300,\n  \"estimatedDuration\": 170\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/routes/{{route_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["routes", "{{route_id}}"]
+            },
+            "description": "Update route information"
+          }
+        },
+        {
+          "name": "Delete Route",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/routes/{{route_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["routes", "{{route_id}}"]
+            },
+            "description": "Delete a route"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Trips",
+      "item": [
+        {
+          "name": "Get All Trips",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/trips?page=1&limit=20",
+              "host": ["{{api_url}}"],
+              "path": ["trips"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all trips with pagination"
+          }
+        },
+        {
+          "name": "Get Trip Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/trips/stats",
+              "host": ["{{api_url}}"],
+              "path": ["trips", "stats"]
+            },
+            "description": "Get trip statistics"
+          }
+        },
+        {
+          "name": "Get Trips by Route",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/trips/route/{{route_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["trips", "route", "{{route_id}}"]
+            },
+            "description": "Get trips for specific route"
+          }
+        },
+        {
+          "name": "Get Trip by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/trips/{{trip_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["trips", "{{trip_id}}"]
+            },
+            "description": "Get specific trip details"
+          }
+        },
+        {
+          "name": "Create Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"{{route_id}}\",\n  \"busId\": \"{{bus_id}}\",\n  \"departureTime\": \"2025-10-12T08:00:00.000Z\",\n  \"arrivalTime\": \"2025-10-12T11:00:00.000Z\",\n  \"price\": 250,\n  \"availableSeats\": 45\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/trips",
+              "host": ["{{api_url}}"],
+              "path": ["trips"]
+            },
+            "description": "Create a new trip"
+          }
+        },
+        {
+          "name": "Update Trip Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/trips/{{trip_id}}/status",
+              "host": ["{{api_url}}"],
+              "path": ["trips", "{{trip_id}}", "status"]
+            },
+            "description": "Update trip status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📍 Locations",
+      "item": [
+        {
+          "name": "Get All Locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/locations?page=1&limit=50",
+              "host": ["{{api_url}}"],
+              "path": ["locations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Get all location records"
+          }
+        },
+        {
+          "name": "Get Nearby Buses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/locations/nearby?latitude=6.9271&longitude=79.8612&radius=5000",
+              "host": ["{{api_url}}"],
+              "path": ["locations", "nearby"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "6.9271"
+                },
+                {
+                  "key": "longitude",
+                  "value": "79.8612"
+                },
+                {
+                  "key": "radius",
+                  "value": "5000"
+                }
+              ]
+            },
+            "description": "Find nearby buses by location"
+          }
+        },
+        {
+          "name": "Get Location Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/locations/stats",
+              "host": ["{{api_url}}"],
+              "path": ["locations", "stats"]
+            },
+            "description": "Get location tracking statistics"
+          }
+        },
+        {
+          "name": "Get Locations by Bus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/locations/bus/{{bus_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["locations", "bus", "{{bus_id}}"]
+            },
+            "description": "Get location history for specific bus"
+          }
+        },
+        {
+          "name": "Create Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"busId\": \"{{bus_id}}\",\n  \"latitude\": 6.9271,\n  \"longitude\": 79.8612,\n  \"accuracy\": 5,\n  \"heading\": 45,\n  \"speed\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/locations",
+              "host": ["{{api_url}}"],
+              "path": ["locations"]
+            },
+            "description": "Create location record"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/users?page=1&limit=20",
+              "host": ["{{api_url}}"],
+              "path": ["users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all users (Admin only)"
+          }
+        },
+        {
+          "name": "Get User Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/users/stats",
+              "host": ["{{api_url}}"],
+              "path": ["users", "stats"]
+            },
+            "description": "Get user statistics"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/users/{{user_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "Get specific user details"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Updated Name\",\n  \"role\": \"operator\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/users/{{user_id}}",
+              "host": ["{{api_url}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "Update user information"
+          }
+        },
+        {
+          "name": "Update User Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"operator\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/users/{{user_id}}/role",
+              "host": ["{{api_url}}"],
+              "path": ["users", "{{user_id}}", "role"]
+            },
+            "description": "Update user role"
+          }
+        },
+        {
+          "name": "Toggle User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/users/{{user_id}}/toggle",
+              "host": ["{{api_url}}"],
+              "path": ["users", "{{user_id}}", "toggle"]
+            },
+            "description": "Toggle user active status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Pricing",
+      "item": [
+        {
+          "name": "Calculate Price",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/pricing/calculate?distance=115&busType=luxury&passengers=2",
+              "host": ["{{api_url}}"],
+              "path": ["pricing", "calculate"],
+              "query": [
+                {
+                  "key": "distance",
+                  "value": "115"
+                },
+                {
+                  "key": "busType",
+                  "value": "luxury"
+                },
+                {
+                  "key": "passengers",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": "Calculate trip price"
+          }
+        },
+        {
+          "name": "Get Pricing Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/pricing/rules",
+              "host": ["{{api_url}}"],
+              "path": ["pricing", "rules"]
+            },
+            "description": "Get pricing rules"
+          }
+        },
+        {
+          "name": "Create Pricing Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Luxury Bus Premium\",\n  \"busType\": \"luxury\",\n  \"pricePerKm\": 3.5,\n  \"minimumFare\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/pricing/rules",
+              "host": ["{{api_url}}"],
+              "path": ["pricing", "rules"]
+            },
+            "description": "Create new pricing rule"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌟 Seasons",
+      "item": [
+        {
+          "name": "Get All Seasons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/seasons?page=1&limit=20",
+              "host": ["{{api_url}}"],
+              "path": ["seasons"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all seasons"
+          }
+        },
+        {
+          "name": "Get Active Seasons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/seasons/active",
+              "host": ["{{api_url}}"],
+              "path": ["seasons", "active"]
+            },
+            "description": "Get currently active seasons"
+          }
+        },
+        {
+          "name": "Get Season Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/seasons/stats",
+              "host": ["{{api_url}}"],
+              "path": ["seasons", "stats"]
+            },
+            "description": "Get season statistics"
+          }
+        },
+        {
+          "name": "Create Season",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Year Season\",\n  \"type\": \"peak\",\n  \"description\": \"High demand period during New Year\",\n  \"startDate\": \"2025-12-25T00:00:00.000Z\",\n  \"endDate\": \"2026-01-05T23:59:59.000Z\",\n  \"priceMultiplier\": 1.5,\n  \"applicableBusTypes\": [\"luxury\", \"semi-luxury\"],\n  \"priority\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_url}}/seasons",
+              "host": ["{{api_url}}"],
+              "path": ["seasons"]
+            },
+            "description": "Create new season"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Search",
+      "item": [
+        {
+          "name": "Live Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/live-search?from=Colombo&to=Kandy&date=2025-10-12",
+              "host": ["{{api_url}}"],
+              "path": ["live-search"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "Colombo"
+                },
+                {
+                  "key": "to",
+                  "value": "Kandy"
+                },
+                {
+                  "key": "date",
+                  "value": "2025-10-12"
+                }
+              ]
+            },
+            "description": "Smart journey planning search"
+          }
+        },
+        {
+          "name": "General Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/search?q=Colombo&type=all&limit=10",
+              "host": ["{{api_url}}"],
+              "path": ["search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Colombo"
+                },
+                {
+                  "key": "type",
+                  "value": "all"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "General search across all entities"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/dashboard",
+              "host": ["{{api_url}}"],
+              "path": ["dashboard"]
+            },
+            "description": "Get dashboard overview data"
+          }
+        },
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/dashboard/stats?period=7d",
+              "host": ["{{api_url}}"],
+              "path": ["dashboard", "stats"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "7d"
+                }
+              ]
+            },
+            "description": "Get dashboard statistics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📈 Analytics",
+      "item": [
+        {
+          "name": "Get Performance Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/analytics/performance",
+              "host": ["{{api_url}}"],
+              "path": ["analytics", "performance"]
+            },
+            "description": "Get performance analytics"
+          }
+        },
+        {
+          "name": "Get Usage Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/analytics/usage",
+              "host": ["{{api_url}}"],
+              "path": ["analytics", "usage"]
+            },
+            "description": "Get usage analytics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Reports",
+      "item": [
+        {
+          "name": "Get Trip Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/reports/trips",
+              "host": ["{{api_url}}"],
+              "path": ["reports", "trips"]
+            },
+            "description": "Get trip reports"
+          }
+        },
+        {
+          "name": "Get Revenue Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/reports/revenue",
+              "host": ["{{api_url}}"],
+              "path": ["reports", "revenue"]
+            },
+            "description": "Get revenue reports"
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚙️ System",
+      "item": [
+        {
+          "name": "Get System Config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_url}}/system/config",
+              "host": ["{{api_url}}"],
+              "path": ["system", "config"]
+            },
+            "description": "Get system configuration"
+          }
+        }
+      ]
+    }
+  ]
+}

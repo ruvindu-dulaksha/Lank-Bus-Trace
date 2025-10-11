@@ -32,6 +32,7 @@ import roleRoutes from './routes/roles.js';
 import analyticsRoutes from './routes/analytics.js';
 import reportsRoutes from './routes/reports.js';
 import systemRoutes from './routes/system.js';
+import sessionTestRoutes from './routes/sessionTest.js';
 
 // Load environment variables
 dotenv.config();
@@ -152,6 +153,10 @@ const specs = swaggerJsdoc(swaggerOptions);
 
 // Swagger JSON specification endpoint
 app.get('/api-docs.json', (req, res) => {
+  // Set CORS headers for Swagger JSON
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
   res.setHeader('Content-Type', 'application/json');
   res.send(specs);
 });
@@ -167,7 +172,42 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
       // Ensure all requests go through proper CORS handling
       req.headers['Accept'] = 'application/json';
       req.headers['Content-Type'] = 'application/json';
+      // Add origin header for CORS
+      req.headers['Origin'] = 'https://ruvindu-dulaksha.me';
       return req;
+    },
+    responseInterceptor: (res) => {
+      // Handle response and ensure proper CORS headers
+      return res;
+    },
+    // Configure servers for proper API testing
+    servers: [
+      {
+        url: 'https://ruvindu-dulaksha.me',
+        description: 'Production Server'
+      }
+    ],
+    // Enable CORS for Swagger UI requests
+    supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+    tryItOutEnabled: true,
+    requestSnippetsEnabled: true,
+    requestSnippets: {
+      generators: {
+        curl_bash: {
+          title: "cURL (bash)",
+          syntax: "bash"
+        },
+        curl_powershell: {
+          title: "cURL (PowerShell)",
+          syntax: "powershell"
+        },
+        curl_cmd: {
+          title: "cURL (CMD)",
+          syntax: "cmd"
+        }
+      },
+      defaultExpanded: true,
+      languages: ['curl_bash', 'curl_powershell', 'curl_cmd']
     }
   }
 }));
@@ -185,6 +225,37 @@ app.get('/api/docs', (req, res) => {
 });
 
 // Health check endpoint
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Basic health check
+ *     tags: [System]
+ *     description: Check if the API server is running
+ *     responses:
+ *       200:
+ *         description: Server is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "OK"
+ *                 message:
+ *                   type: string
+ *                   example: "Lanka Bus Trace API is running"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 uptime:
+ *                   type: number
+ *                   description: Server uptime in seconds
+ *                 environment:
+ *                   type: string
+ *                   example: "production"
+ */
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -196,6 +267,43 @@ app.get('/health', (req, res) => {
 });
 
 // API Health endpoint
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Detailed API health check
+ *     tags: [System]
+ *     description: Detailed health information including database connectivity
+ *     responses:
+ *       200:
+ *         description: API is healthy with detailed information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "healthy"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 uptime:
+ *                   type: number
+ *                 database:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: "connected"
+ *                     name:
+ *                       type: string
+ *                 version:
+ *                   type: string
+ *                   example: "1.0.0"
+ *                 environment:
+ *                   type: string
+ */
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -218,6 +326,24 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Additional CORS middleware for API routes to ensure Swagger UI works
+app.use('/api', (req, res, next) => {
+  // Set CORS headers for all API routes
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, Accept, Origin, X-Requested-With, Access-Control-Allow-Headers');
+  res.header('Access-Control-Expose-Headers', 'X-Total-Count, X-Page-Count, Link, ETag, Last-Modified');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/buses', busRoutes);
@@ -233,8 +359,45 @@ app.use('/api', roleRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/session', sessionTestRoutes);
 
 // Root endpoint
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: API root information
+ *     tags: [System]
+ *     description: Get basic API information and available endpoints
+ *     responses:
+ *       200:
+ *         description: API information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: "Lanka Bus Trace API"
+ *                 version:
+ *                   type: string
+ *                   example: "1.0.0"
+ *                 status:
+ *                   type: string
+ *                   example: "running"
+ *                 message:
+ *                   type: string
+ *                 documentation:
+ *                   type: string
+ *                   example: "/api-docs"
+ *                 api:
+ *                   type: string
+ *                   example: "/api"
+ *                 health:
+ *                   type: string
+ *                   example: "/health"
+ */
 app.get('/', (req, res) => {
   res.json({
     name: 'Lanka Bus Trace API',
@@ -248,6 +411,38 @@ app.get('/', (req, res) => {
 });
 
 // API Info endpoint
+/**
+ * @swagger
+ * /api:
+ *   get:
+ *     summary: API endpoints information
+ *     tags: [System]
+ *     description: Get detailed information about all available API endpoints
+ *     responses:
+ *       200:
+ *         description: API endpoints information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                 version:
+ *                   type: string
+ *                 description:
+ *                   type: string
+ *                 endpoints:
+ *                   type: object
+ *                   description: All available API endpoints
+ *                 contact:
+ *                   type: object
+ *                   properties:
+ *                     organization:
+ *                       type: string
+ *                     website:
+ *                       type: string
+ */
 app.get('/api', (req, res) => {
   res.json({
     name: 'Lanka Bus Trace API',
