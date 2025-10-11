@@ -39,8 +39,8 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-// Trust proxy for Nginx reverse proxy
-app.set('trust proxy', true);
+// Trust proxy for Nginx reverse proxy (secure configuration)
+app.set('trust proxy', 1);
 
 // Connect to MongoDB
 connectDB();
@@ -50,9 +50,25 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS configuration
+// CORS configuration - Updated for Swagger UI compatibility
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow same origin requests for Swagger UI
+    const allowedOrigins = [
+      'https://api.ruvindu-dulaksha.me',
+      'https://ruvindu-dulaksha.me',
+      ...(process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'])
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins for API documentation
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
