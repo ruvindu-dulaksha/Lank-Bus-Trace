@@ -471,6 +471,341 @@ GET /api/search?q=Colombo&type=route&limit=5
             }
           },
           required: ['success', 'data', 'pagination']
+        },
+        Trip: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            },
+            routeId: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            },
+            busId: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            },
+            departureTime: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-10-11T09:00:00.000Z'
+            },
+            estimatedArrivalTime: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-10-11T12:00:00.000Z'
+            },
+            status: {
+              type: 'string',
+              enum: ['scheduled', 'in-progress', 'completed', 'cancelled'],
+              example: 'scheduled'
+            },
+            currentLocation: {
+              type: 'object',
+              properties: {
+                coordinates: {
+                  type: 'object',
+                  properties: {
+                    latitude: { type: 'number', example: 6.9271 },
+                    longitude: { type: 'number', example: 79.8612 }
+                  }
+                },
+                lastUpdated: {
+                  type: 'string',
+                  format: 'date-time'
+                }
+              }
+            },
+            isActive: {
+              type: 'boolean',
+              example: true
+            }
+          }
+        },
+        TripCreate: {
+          type: 'object',
+          required: ['routeId', 'busId', 'departureTime'],
+          properties: {
+            routeId: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            },
+            busId: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            },
+            departureTime: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-10-11T09:00:00.000Z'
+            },
+            estimatedArrivalTime: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-10-11T12:00:00.000Z'
+            }
+          }
+        },
+        TripUpdate: {
+          type: 'object',
+          properties: {
+            departureTime: {
+              type: 'string',
+              format: 'date-time'
+            },
+            estimatedArrivalTime: {
+              type: 'string',
+              format: 'date-time'
+            },
+            status: {
+              type: 'string',
+              enum: ['scheduled', 'in-progress', 'completed', 'cancelled']
+            },
+            currentLocation: {
+              type: 'object',
+              properties: {
+                coordinates: {
+                  type: 'object',
+                  properties: {
+                    latitude: { type: 'number' },
+                    longitude: { type: 'number' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        Location: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            },
+            name: {
+              type: 'string',
+              example: 'Colombo Central Bus Stand'
+            },
+            coordinates: {
+              type: 'object',
+              properties: {
+                latitude: { type: 'number', example: 6.9271 },
+                longitude: { type: 'number', example: 79.8612 }
+              }
+            },
+            address: {
+              type: 'string',
+              example: 'Colombo Fort, Colombo 01'
+            },
+            type: {
+              type: 'string',
+              enum: ['terminal', 'stop', 'landmark'],
+              example: 'terminal'
+            },
+            isActive: {
+              type: 'boolean',
+              example: true
+            }
+          }
+        },
+        GeoLocation: {
+          type: 'object',
+          properties: {
+            coordinates: {
+              type: 'object',
+              properties: {
+                latitude: { 
+                  type: 'number', 
+                  minimum: -90, 
+                  maximum: 90,
+                  example: 6.9271 
+                },
+                longitude: { 
+                  type: 'number', 
+                  minimum: -180, 
+                  maximum: 180,
+                  example: 79.8612 
+                }
+              },
+              required: ['latitude', 'longitude']
+            },
+            accuracy: {
+              type: 'number',
+              example: 10,
+              description: 'GPS accuracy in meters'
+            },
+            timestamp: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-10-11T09:30:00.000Z'
+            }
+          },
+          required: ['coordinates']
+        },
+        BusCreate: {
+          type: 'object',
+          required: ['registrationNumber', 'busNumber', 'operatorName', 'capacity', 'busType'],
+          properties: {
+            registrationNumber: {
+              type: 'string',
+              example: 'NB-1234'
+            },
+            busNumber: {
+              type: 'string',
+              example: 'B001'
+            },
+            operatorName: {
+              type: 'string',
+              example: 'SLTB Colombo'
+            },
+            capacity: {
+              type: 'number',
+              minimum: 1,
+              maximum: 100,
+              example: 52
+            },
+            busType: {
+              type: 'string',
+              enum: ['standard', 'semi-luxury', 'luxury', 'super-luxury'],
+              example: 'semi-luxury'
+            },
+            features: {
+              type: 'array',
+              items: {
+                type: 'string'
+              },
+              example: ['AC', 'WiFi', 'Charging Points']
+            }
+          }
+        },
+        BusUpdate: {
+          type: 'object',
+          properties: {
+            operatorName: {
+              type: 'string'
+            },
+            capacity: {
+              type: 'number',
+              minimum: 1,
+              maximum: 100
+            },
+            busType: {
+              type: 'string',
+              enum: ['standard', 'semi-luxury', 'luxury', 'super-luxury']
+            },
+            features: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            isActive: {
+              type: 'boolean'
+            },
+            currentLocation: {
+              type: 'object',
+              properties: {
+                coordinates: {
+                  type: 'object',
+                  properties: {
+                    latitude: { type: 'number' },
+                    longitude: { type: 'number' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        RouteCreate: {
+          type: 'object',
+          required: ['routeNumber', 'routeName', 'origin', 'destination', 'distance'],
+          properties: {
+            routeNumber: {
+              type: 'string',
+              example: 'R001'
+            },
+            routeName: {
+              type: 'string',
+              example: 'Colombo - Kandy Express'
+            },
+            origin: {
+              type: 'object',
+              properties: {
+                city: { type: 'string', example: 'Colombo' },
+                terminal: { type: 'string', example: 'Bastian Mawatha' },
+                coordinates: {
+                  type: 'object',
+                  properties: {
+                    latitude: { type: 'number', example: 6.9271 },
+                    longitude: { type: 'number', example: 79.8612 }
+                  }
+                }
+              }
+            },
+            destination: {
+              type: 'object',
+              properties: {
+                city: { type: 'string', example: 'Kandy' },
+                terminal: { type: 'string', example: 'Kandy Bus Terminal' },
+                coordinates: {
+                  type: 'object',
+                  properties: {
+                    latitude: { type: 'number', example: 7.2906 },
+                    longitude: { type: 'number', example: 80.6337 }
+                  }
+                }
+              }
+            },
+            distance: {
+              type: 'number',
+              minimum: 0,
+              example: 115.5
+            },
+            estimatedDuration: {
+              type: 'number',
+              minimum: 0,
+              example: 180,
+              description: 'Duration in minutes'
+            }
+          }
+        },
+        RouteUpdate: {
+          type: 'object',
+          properties: {
+            routeName: {
+              type: 'string'
+            },
+            distance: {
+              type: 'number',
+              minimum: 0
+            },
+            estimatedDuration: {
+              type: 'number',
+              minimum: 0
+            },
+            stops: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  coordinates: {
+                    type: 'object',
+                    properties: {
+                      latitude: { type: 'number' },
+                      longitude: { type: 'number' }
+                    }
+                  },
+                  estimatedArrival: { type: 'number' }
+                }
+              }
+            },
+            isActive: {
+              type: 'boolean'
+            }
+          }
         }
       }
     },
