@@ -110,29 +110,48 @@ class TokenBlacklistService {
 
   /**
    * Get blacklist statistics
-   * @returns {object} - Blacklist statistics
+   * @returns {Object} Blacklist statistics
    */
   getStats() {
-    return {
+    const stats = {
       totalBlacklistedTokens: this.blacklistedTokens.size,
-      lastCleanup: new Date().toISOString(),
-      memoryUsage: process.memoryUsage()
+      lastCleanup: this.lastCleanup ? new Date(this.lastCleanup).toISOString() : new Date().toISOString(),
+      memoryUsage: {
+        tokensInMemory: this.blacklistedTokens.size,
+        estimatedMemoryKB: Math.round((this.blacklistedTokens.size * 200) / 1024), // Rough estimate
+        cleanupInterval: '1 hour',
+        serviceStatus: 'active'
+      },
+      serviceInfo: {
+        initialized: true,
+        cleanupActive: !!this.cleanupInterval,
+        lastActivity: new Date().toISOString()
+      }
     };
+
+    logger.info('Blacklist statistics requested', stats);
+    return stats;
   }
 
-  /**
-   * Clear all blacklisted tokens (for testing or emergency)
+    /**
+   * Clear all blacklisted tokens (Emergency use only)
+   * @param {string} adminUserId - ID of admin performing the action
+   * @returns {Object} Cleanup result
    */
-  clearAll() {
-    const count = this.blacklistedTokens.size;
+  clearBlacklist(adminUserId = 'system') {
+    const clearedCount = this.blacklistedTokens.size;
     this.blacklistedTokens.clear();
     
-    logger.warn(`Cleared all ${count} blacklisted tokens`, {
-      action: 'clear_all_blacklist',
-      timestamp: new Date().toISOString()
-    });
+    const result = {
+      clearedTokens: clearedCount,
+      clearedBy: adminUserId,
+      timestamp: new Date().toISOString(),
+      reason: 'Administrative blacklist clear',
+      success: true
+    };
 
-    return count;
+    logger.warn('Blacklist cleared by admin', result);
+    return result;
   }
 
   /**

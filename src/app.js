@@ -24,15 +24,10 @@ import routeRoutes from './routes/routes.js';
 import tripRoutes from './routes/trips.js';
 import locationRoutes from './routes/locations.js';
 import userRoutes from './routes/users.js';
-import pricingRoutes from './routes/pricing.js';
-import seasonRoutes from './routes/seasons.js';
 import searchRoutes from './routes/search.js';
 import dashboardRoutes from './routes/dashboard.js';
-import roleRoutes from './routes/roles.js';
 import analyticsRoutes from './routes/analytics.js';
-import reportsRoutes from './routes/reports.js';
 import systemRoutes from './routes/system.js';
-import sessionTestRoutes from './routes/sessionTest.js';
 
 // Load environment variables
 dotenv.config();
@@ -351,15 +346,10 @@ app.use('/api/routes', routeRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/pricing', pricingRoutes);
-app.use('/api/seasons', seasonRoutes);
 app.use('/api', searchRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api', roleRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/reports', reportsRoutes);
 app.use('/api/system', systemRoutes);
-app.use('/api/session', sessionTestRoutes);
 
 // Root endpoint
 /**
@@ -457,14 +447,10 @@ app.get('/api', (req, res) => {
       trips: '/api/trips',
       locations: '/api/locations',
       users: '/api/users',
-      pricing: '/api/pricing',
-      seasons: '/api/seasons',
       search: '/api/search',
       liveSearch: '/api/live-search',
       dashboard: '/api/dashboard',
-      driver: '/api/driver',
-      conductor: '/api/conductor',
-      operator: '/api/operator'
+      analytics: '/api/analytics'
     },
     contact: {
       organization: 'Lanka Bus Trace',
