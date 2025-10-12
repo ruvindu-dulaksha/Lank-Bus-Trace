@@ -284,23 +284,25 @@ routeSchema.methods.getEstimatedArrivalAtStop = function(stopName, departureTime
 
 // Static method to find routes between cities
 routeSchema.statics.findRoutesBetween = function(fromCity, toCity) {
-  const fromRegex = new RegExp(`^${fromCity.trim()}$`, 'i'); // Exact match
-  const toRegex = new RegExp(`^${toCity.trim()}$`, 'i');     // Exact match
+  const fromRegex = new RegExp(fromCity.trim(), 'i'); // Partial match (contains)
+  const toRegex = new RegExp(toCity.trim(), 'i');     // Partial match (contains)
   
   return this.find({
-    $or: [
-      // Direct exact matches for origin and destination
+    $and: [
+      // Origin matches (both string and object formats)
       { 
-        $and: [
-          { origin: fromRegex },
-          { destination: toRegex }
+        $or: [
+          { origin: fromRegex },                    // String format partial match
+          { 'origin.city': fromRegex },             // Object format partial match
+          { 'origin.terminal': fromRegex }          // Terminal name partial match
         ]
       },
-      // Object format matches (if origin/destination are objects)
+      // Destination matches (both string and object formats)
       { 
-        $and: [
-          { 'origin.city': fromRegex },
-          { 'destination.city': toRegex }
+        $or: [
+          { destination: toRegex },                 // String format partial match
+          { 'destination.city': toRegex },          // Object format partial match
+          { 'destination.terminal': toRegex }       // Terminal name partial match
         ]
       }
     ],
