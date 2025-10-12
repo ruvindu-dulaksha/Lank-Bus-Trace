@@ -25,17 +25,80 @@ export const getAllRoutes = asyncHandler(async (req, res) => {
   // Build filter query
   const filter = {};
   
-  if (origin) filter.origin = new RegExp(origin, 'i');
-  if (destination) filter.destination = new RegExp(destination, 'i');
-  if (province) filter.provinces = { $in: [province] };
+  // Handle mixed origin formats (string and object)
+  if (origin) {
+    filter.$or = filter.$or || [];
+    filter.$or.push(
+      { origin: new RegExp(origin, 'i') },           // String format
+      { 'origin.city': new RegExp(origin, 'i') }     // Object format
+    );
+  }
+  
+  // Handle mixed destination formats (string and object)  
+  if (destination) {
+    const destFilter = {
+      $or: [
+        { destination: new RegExp(destination, 'i') },     // String format
+        { 'destination.city': new RegExp(destination, 'i') } // Object format
+      ]
+    };
+    
+    if (filter.$or) {
+      // If we already have an $or clause, combine them with $and
+      filter.$and = [
+        { $or: filter.$or },
+        destFilter
+      ];
+      delete filter.$or;
+    } else {
+      filter.$or = destFilter.$or;
+    }
+  }
+  
+  // Handle province filter - check if the province is in the provinces array (case-insensitive)
+  if (province) {
+    const provinceFilter = {
+      provinces: { $in: [new RegExp(province, 'i')] }
+    };
+    
+    if (filter.$and) {
+      filter.$and.push(provinceFilter);
+    } else if (filter.$or) {
+      filter.$and = [
+        { $or: filter.$or },
+        provinceFilter
+      ];
+      delete filter.$or;
+    } else {
+      Object.assign(filter, provinceFilter);
+    }
+  }
+  
   if (status) filter.isActive = status === 'active';
+  
   if (search) {
-    filter.$or = [
-      { routeNumber: new RegExp(search, 'i') },
-      { routeName: new RegExp(search, 'i') },
-      { origin: new RegExp(search, 'i') },
-      { destination: new RegExp(search, 'i') }
-    ];
+    const searchFilter = {
+      $or: [
+        { routeNumber: new RegExp(search, 'i') },
+        { routeName: new RegExp(search, 'i') },
+        { origin: new RegExp(search, 'i') },           // String format
+        { 'origin.city': new RegExp(search, 'i') },    // Object format
+        { destination: new RegExp(search, 'i') },      // String format
+        { 'destination.city': new RegExp(search, 'i') } // Object format
+      ]
+    };
+    
+    if (filter.$and) {
+      filter.$and.push(searchFilter);
+    } else if (filter.$or) {
+      filter.$and = [
+        { $or: filter.$or },
+        searchFilter
+      ];
+      delete filter.$or;
+    } else {
+      filter.$or = searchFilter.$or;
+    }
   }
 
   const skip = (page - 1) * limit;
