@@ -24,16 +24,61 @@ export const getAllBuses = asyncHandler(async (req, res) => {
   // Build filter query
   const filter = {};
   
-  if (status) filter.operationalStatus = status;
+  // Handle status filtering - support both 'active' status and multiple statuses
+  if (status) {
+    if (status === 'active') {
+      filter.operationalStatus = 'active';
+    } else {
+      filter.operationalStatus = status;
+    }
+  }
+  
   if (route) filter.assignedRoutes = route;
-  if (operator) filter['operatorInfo.companyName'] = new RegExp(operator, 'i');
-  if (busType) filter.busType = busType;
-  if (search) {
-    filter.$or = [
-      { registrationNumber: new RegExp(search, 'i') },
-      { busNumber: new RegExp(search, 'i') },
-      { 'operatorInfo.companyName': new RegExp(search, 'i') }
+  
+  // Enhanced operator filtering - search in multiple operator fields and handle common abbreviations
+  if (operator) {
+    const operatorQueries = [
+      { 'operatorInfo.companyName': new RegExp(operator, 'i') },
+      { 'operatorInfo.operatorName': new RegExp(operator, 'i') }
     ];
+    
+    // Handle common abbreviations
+    const operatorLower = operator.toLowerCase();
+    if (operatorLower === 'sltb') {
+      operatorQueries.push({ 'operatorInfo.companyName': new RegExp('Sri Lanka Transport Board', 'i') });
+    } else if (operatorLower === 'ntc') {
+      operatorQueries.push({ 'operatorInfo.companyName': new RegExp('National Transport Commission', 'i') });
+    } else if (operatorLower === 'ept') {
+      operatorQueries.push({ 'operatorInfo.companyName': new RegExp('Eastern Province Transport', 'i') });
+    }
+    
+    filter.$or = filter.$or || [];
+    filter.$or.push(...operatorQueries);
+  }
+  
+  if (busType) filter.busType = busType;
+  
+  // Enhanced search functionality
+  if (search) {
+    const searchFilter = {
+      $or: [
+        { registrationNumber: new RegExp(search, 'i') },
+        { busNumber: new RegExp(search, 'i') },
+        { 'operatorInfo.companyName': new RegExp(search, 'i') },
+        { 'operatorInfo.operatorName': new RegExp(search, 'i') }
+      ]
+    };
+    
+    if (filter.$or) {
+      // If we already have an $or clause, combine them with $and
+      filter.$and = [
+        { $or: filter.$or },
+        searchFilter
+      ];
+      delete filter.$or;
+    } else {
+      filter.$or = searchFilter.$or;
+    }
   }
 
   const skip = (page - 1) * limit;

@@ -24,7 +24,17 @@ export const getAllTrips = asyncHandler(async (req, res) => {
   // Build filter query
   const filter = {};
   
-  if (status) filter.status = status;
+  // Enhanced status filtering - handle both specific statuses and 'active' query
+  if (status) {
+    if (status === 'active') {
+      // When querying for 'active' trips, return scheduled, boarding, and in-transit trips
+      filter.status = { $in: ['scheduled', 'boarding', 'in-transit', 'departed'] };
+    } else {
+      // For specific status queries, use exact match
+      filter.status = status;
+    }
+  }
+  
   if (routeId) filter.routeId = routeId;
   if (busId) filter.busId = busId;
   

@@ -19,15 +19,24 @@ export const liveSearch = async (req, res) => {
     // Get current time or specified time
     const searchTime = date ? new Date(date) : new Date();
     
-    // Find routes between locations
+    // Find routes between locations - enhanced to handle mixed data formats
     const routes = await Route.find({
       $or: [
+        // Handle string format origins/destinations
         { 
           $and: [
             { 'origin': { $regex: from, $options: 'i' } },
             { 'destination': { $regex: to, $options: 'i' } }
           ]
         },
+        // Handle object format origins/destinations
+        { 
+          $and: [
+            { 'origin.city': { $regex: from, $options: 'i' } },
+            { 'destination.city': { $regex: to, $options: 'i' } }
+          ]
+        },
+        // Handle stops (existing logic)
         {
           $and: [
             { 'stops.name': { $regex: from, $options: 'i' } },
@@ -153,12 +162,25 @@ export const generalSearch = async (req, res) => {
 
     // Search buses if no type specified or type is 'bus' or type is 'all'
     if (!type || type === 'bus' || type === 'all') {
+      const busQueries = [
+        { busNumber: searchRegex },
+        { registrationNumber: searchRegex },
+        { 'operatorInfo.companyName': searchRegex },
+        { 'operatorInfo.operatorName': searchRegex }
+      ];
+      
+      // Handle common operator abbreviations
+      const queryLower = q.toLowerCase();
+      if (queryLower === 'sltb') {
+        busQueries.push({ 'operatorInfo.companyName': /Sri Lanka Transport Board/i });
+      } else if (queryLower === 'ntc') {
+        busQueries.push({ 'operatorInfo.companyName': /National Transport Commission/i });
+      } else if (queryLower === 'ept') {
+        busQueries.push({ 'operatorInfo.companyName': /Eastern Province Transport/i });
+      }
+      
       const buses = await Bus.find({
-        $or: [
-          { busNumber: searchRegex },
-          { registrationNumber: searchRegex },
-          { 'operatorInfo.name': searchRegex }
-        ]
+        $or: busQueries
       }).limit(parseInt(limit));
       
       results.buses = buses;
