@@ -3,7 +3,61 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get all seasonal pricing
+/**
+ * @swagger
+ * /api/seasons:
+ *   get:
+ *     summary: Get all seasonal pricing configurations
+ *     tags: [Seasons]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Seasonal pricing configurations retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "1"
+ *                       name:
+ *                         type: string
+ *                         example: "Peak Season"
+ *                       description:
+ *                         type: string
+ *                         example: "High demand period with increased fares"
+ *                       startDate:
+ *                         type: string
+ *                         format: date
+ *                         example: "2025-12-15"
+ *                       endDate:
+ *                         type: string
+ *                         format: date
+ *                         example: "2026-01-15"
+ *                       multiplier:
+ *                         type: number
+ *                         example: 1.5
+ *                       isActive:
+ *                         type: boolean
+ *                         example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Seasonal pricing retrieved successfully"
+ *       401:
+ *         $ref: '#/components/schemas/Error'
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
 router.get('/', authenticate, async (req, res) => {
   try {
     const seasons = [
@@ -46,7 +100,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Create new seasonal pricing
-router.post('/', authenticate, authorize(['admin']), async (req, res) => {
+router.post('/', authenticate, authorize('admin'), async (req, res) => {
   try {
     const { name, description, startDate, endDate, multiplier } = req.body;
 

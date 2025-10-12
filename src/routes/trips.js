@@ -362,4 +362,108 @@ router.patch('/:id/status', authenticate, authorize('admin', 'operator'), update
  */
 router.post('/:id/delay', authenticate, authorize('admin', 'operator'), addTripDelay);
 
+/**
+ * @swagger
+ * /api/trips/live-tracking:
+ *   get:
+ *     summary: Get live tracking data for all active trips
+ *     tags: [Trips]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Live tracking data for active trips
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       tripId:
+ *                         type: string
+ *                       busNumber:
+ *                         type: string
+ *                       routeName:
+ *                         type: string
+ *                       currentLocation:
+ *                         type: object
+ *                       status:
+ *                         type: string
+ *                       nextStop:
+ *                         type: string
+ *                       estimatedArrival:
+ *                         type: string
+ *                       passengers:
+ *                         type: number
+ *       401:
+ *         description: Authentication required
+ */
+router.get('/live-tracking', authenticate, authorize('admin', 'operator', 'commuter'), async (req, res) => {
+  try {
+    const activeTrips = [
+      {
+        tripId: 'TRP001',
+        busNumber: 'B001',
+        routeName: 'Colombo - Kandy',
+        currentLocation: {
+          latitude: 7.1500,
+          longitude: 80.2000,
+          locationName: 'Kegalle',
+          timestamp: new Date().toISOString()
+        },
+        status: 'in-transit',
+        nextStop: 'Mawanella',
+        estimatedArrival: '14:30',
+        passengers: 42,
+        capacity: 50,
+        delay: 5,
+        speed: 65,
+        direction: 'North-East'
+      },
+      {
+        tripId: 'TRP002',
+        busNumber: 'B003',
+        routeName: 'Colombo - Galle',
+        currentLocation: {
+          latitude: 6.8000,
+          longitude: 79.9000,
+          locationName: 'Panadura',
+          timestamp: new Date().toISOString()
+        },
+        status: 'in-transit',
+        nextStop: 'Kalutara',
+        estimatedArrival: '15:15',
+        passengers: 38,
+        capacity: 45,
+        delay: 0,
+        speed: 72,
+        direction: 'South'
+      }
+    ];
+
+    res.status(200).json({
+      success: true,
+      data: activeTrips,
+      message: `Live tracking data for ${activeTrips.length} active trips`,
+      meta: {
+        totalActiveTrips: activeTrips.length,
+        lastUpdated: new Date().toISOString(),
+        updateInterval: '30 seconds'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving live tracking data',
+      error: error.message
+    });
+  }
+});
+
 export default router;

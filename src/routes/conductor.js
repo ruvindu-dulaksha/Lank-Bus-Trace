@@ -3,8 +3,100 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/conductor/profile:
+ *   get:
+ *     summary: Get conductor profile information
+ *     tags: [Conductor]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Conductor profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     conductorId:
+ *                       type: string
+ *                       example: "507f1f77bcf86cd799439011"
+ *                     username:
+ *                       type: string
+ *                       example: "conductor_mary"
+ *                     email:
+ *                       type: string
+ *                       example: "mary.conductor@sltb.lk"
+ *                     employmentInfo:
+ *                       type: object
+ *                       properties:
+ *                         joinDate:
+ *                           type: string
+ *                           format: date
+ *                           example: "2022-06-20"
+ *                         employeeId:
+ *                           type: string
+ *                           example: "CON001"
+ *                 message:
+ *                   type: string
+ *                   example: "Conductor profile retrieved successfully"
+ *       401:
+ *         $ref: '#/components/schemas/Error'
+ *       403:
+ *         $ref: '#/components/schemas/Error'
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.get('/profile', authenticate, authorize('conductor'), async (req, res) => {
+  try {
+    const conductorProfile = {
+      conductorId: req.user.id,
+      username: req.user.username,
+      email: req.user.email,
+      personalInfo: req.user.personalInfo || {},
+      employmentInfo: {
+        joinDate: '2022-06-20',
+        employeeId: 'CON001',
+        status: 'active',
+        department: 'Passenger Services'
+      },
+      statistics: {
+        totalTrips: 342,
+        totalTicketsSold: 12450,
+        totalRevenue: 2450000,
+        averagePassengersPerTrip: 36.4,
+        customerRating: 4.6,
+        accuracyRate: 98.7
+      },
+      certifications: [
+        { name: 'Customer Service', issueDate: '2023-03-10', expiryDate: '2026-03-10' },
+        { name: 'Ticketing Systems', issueDate: '2022-07-15', expiryDate: '2025-07-15' }
+      ]
+    };
+
+    res.status(200).json({
+      success: true,
+      data: conductorProfile,
+      message: 'Conductor profile retrieved successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving conductor profile',
+      error: error.message
+    });
+  }
+});
+
 // Get conductor dashboard
-router.get('/dashboard', authenticate, authorize(['conductor']), async (req, res) => {
+router.get('/dashboard', authenticate, authorize('conductor'), async (req, res) => {
   try {
     const conductorDashboard = {
       conductorId: req.user.id,
@@ -45,7 +137,7 @@ router.get('/dashboard', authenticate, authorize(['conductor']), async (req, res
 });
 
 // Sell ticket
-router.post('/tickets/sell', authenticate, authorize(['conductor']), async (req, res) => {
+router.post('/tickets/sell', authenticate, authorize('conductor'), async (req, res) => {
   try {
     const { tripId, from, to, passengers, fare } = req.body;
 
@@ -76,7 +168,7 @@ router.post('/tickets/sell', authenticate, authorize(['conductor']), async (req,
 });
 
 // Get trip passengers
-router.get('/trips/:tripId/passengers', authenticate, authorize(['conductor']), async (req, res) => {
+router.get('/trips/:tripId/passengers', authenticate, authorize('conductor'), async (req, res) => {
   try {
     const { tripId } = req.params;
 
