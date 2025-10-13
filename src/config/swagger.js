@@ -208,6 +208,117 @@ curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=202
           }
         }
       },
+      responses: {
+        Success: {
+          description: 'Operation successful',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Success'
+              }
+            }
+          }
+        },
+        BadRequest: {
+          description: 'Bad request - Invalid input data',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Invalid input data provided'
+              }
+            }
+          }
+        },
+        Unauthorized: {
+          description: 'Authentication required - Invalid or missing token',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Access token required. Please provide a valid Bearer token.'
+              }
+            }
+          }
+        },
+        Forbidden: {
+          description: 'Access denied - Insufficient permissions',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Access denied. Required role: admin. Your role: commuter'
+              }
+            }
+          }
+        },
+        NotFound: {
+          description: 'Resource not found',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Resource not found'
+              }
+            }
+          }
+        },
+        Conflict: {
+          description: 'Conflict - Resource already exists',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Resource already exists'
+              }
+            }
+          }
+        },
+        TooManyRequests: {
+          description: 'Rate limit exceeded',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Rate limit exceeded. Please try again later.',
+                retryAfter: 60
+              }
+            }
+          }
+        },
+        InternalServerError: {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Internal server error occurred'
+              }
+            }
+          }
+        }
+      },
       schemas: {
         Error: {
           type: 'object',

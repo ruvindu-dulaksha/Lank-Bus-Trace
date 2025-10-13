@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Route from '../models/Route.js';
 import Bus from '../models/Bus.js';
 import Trip from '../models/Trip.js';
@@ -832,9 +833,12 @@ export const getRouteStats = asyncHandler(async (req, res) => {
     throw new AppError('Route not found', 404);
   }
 
+  // Convert routeId to ObjectId for proper MongoDB queries
+  const objectId = new mongoose.Types.ObjectId(routeId);
+
   // Get assigned buses count
   const busCount = await Bus.countDocuments({
-    assignedRoutes: routeId,
+    'assignedRoutes.routeId': objectId,
     operationalStatus: 'active'
   });
 
@@ -845,7 +849,7 @@ export const getRouteStats = asyncHandler(async (req, res) => {
   const tripStats = await Trip.aggregate([
     {
       $match: {
-        routeId: routeId,
+        routeId: objectId,
         'schedule.departureTime': { $gte: thirtyDaysAgo }
       }
     },
@@ -861,7 +865,7 @@ export const getRouteStats = asyncHandler(async (req, res) => {
   const passengerStats = await Trip.aggregate([
     {
       $match: {
-        routeId: routeId,
+        routeId: objectId,
         'schedule.departureTime': { $gte: thirtyDaysAgo },
         status: 'completed'
       }
