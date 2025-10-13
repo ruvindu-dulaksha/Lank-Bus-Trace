@@ -274,7 +274,6 @@ export const searchRoutes = asyncHandler(async (req, res) => {
     adults = 1,        // Number of adult passengers
     children = 0,      // Number of child passengers
     passengerAge,      // Legacy single passenger age
-    ticketType,        // 'adult' or 'child'
     departureTime, 
     busType,
     sortBy = 'price',
@@ -485,11 +484,9 @@ export const searchRoutes = asyncHandler(async (req, res) => {
           operator: bus?.operator,
           amenities: bus?.amenities || []
         },
-        availability: {
+        capacity: {
           totalSeats: trip.capacity?.totalSeats || 45,
-          availableSeats: trip.capacity?.totalSeats - (trip.passengerInfo?.currentCount || 0),
-          currentPassengers: trip.passengerInfo?.currentCount || 0,
-          occupancyRate: Math.round(((trip.passengerInfo?.currentCount || 0) / (trip.capacity?.totalSeats || 45)) * 100)
+          currentPassengers: trip.passengerInfo?.currentCount || 0
         },
         pricing: {
           standardFare: finalFarePerPerson,
@@ -688,12 +685,11 @@ export const searchRoutes = asyncHandler(async (req, res) => {
           currency: 'LKR'
         },
         availableBusTypes: busTypes,
-        availabilityStatus: allTrips.some(trip => trip.availability?.availableSeats > 0) ? 'available' : 'limited',
         averageJourneyTime: Math.round(searchResults.routes.reduce((sum, route) => sum + route.estimatedDuration, 0) / searchResults.routes.length),
         recommendations: [
           allPrices.length > 1 ? 'Multiple options available - compare prices and times' : 'Route available - check schedule',
           busTypes.includes('luxury') ? 'Luxury options available for enhanced comfort' : '',
-          allTrips.length > 0 ? 'Check seat availability and book in advance for better prices' : 'Contact operator for current schedule and availability'
+          allTrips.length > 0 ? 'Contact operator for current schedule' : 'Contact operator for current schedule and availability'
         ].filter(Boolean)
       };
     } else {
@@ -1024,7 +1020,6 @@ export const getPriceCheck = asyncHandler(async (req, res) => {
       tips: [
         'Prices may vary based on time of day and season',
         'Luxury buses offer more comfort at higher prices',
-        'Book in advance for better seat selection',
         'Student and senior discounts may be available'
       ]
     }

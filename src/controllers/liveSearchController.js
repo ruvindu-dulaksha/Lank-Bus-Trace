@@ -108,9 +108,7 @@ export const liveRouteSearch = asyncHandler(async (req, res) => {
           registrationNumber: bus.registrationNumber || 'N/A',
           busNumber: bus.busNumber || 'N/A',
           busType: bus.busType || 'N/A',
-          capacity: bus.capacity,
-          availableSeats: bus.capacity?.seated ? 
-            bus.capacity.seated - (trip.passengerInfo?.currentCount || 0) : null
+          capacity: bus.capacity
         },
         status: trip.status,
         currentLocation: bus.currentLocation,
@@ -149,9 +147,7 @@ export const liveRouteSearch = asyncHandler(async (req, res) => {
           registrationNumber: bus.registrationNumber || 'N/A',
           busNumber: bus.busNumber || 'N/A',
           busType: bus.busType || 'N/A',
-          capacity: bus.capacity || null,
-          availableSeats: bus.capacity?.seated ? 
-            bus.capacity.seated - (trip.passengerInfo?.currentCount || 0) : null
+          capacity: bus.capacity || null
         },
         status: trip.status,
         schedule: {

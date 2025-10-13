@@ -61,163 +61,54 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const pricingRules = [
+    const basicPricing = [
       {
-        id: '1',
-        routeId: '68e676d44b1fa32c8ada8725',
-        baseFare: 150,
-        distanceRate: 5.5,
-        minimumFare: 100,
-        maximumFare: 800,
-        busType: 'standard',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        route: 'Colombo - Kandy',
+        adultPrice: 288,
+        childPrice: 144,
+        distance: '115 km'
       },
       {
-        id: '2',
-        routeId: '68e676d44b1fa32c8ada8726',
-        baseFare: 200,
-        distanceRate: 6.0,
-        minimumFare: 120,
-        maximumFare: 1000,
-        busType: 'luxury',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        route: 'Colombo - Galle', 
+        adultPrice: 200,
+        childPrice: 100,
+        distance: '119 km'
       },
       {
-        id: '3',
-        routeId: '68e676d44b1fa32c8ada8727',
-        baseFare: 100,
-        distanceRate: 4.5,
-        minimumFare: 80,
-        maximumFare: 600,
-        busType: 'semi-luxury',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        route: 'Colombo - Jaffna',
+        adultPrice: 450,
+        childPrice: 225,
+        distance: '396 km'
+      },
+      {
+        route: 'Colombo - Badulla',
+        adultPrice: 350,
+        childPrice: 175,
+        distance: '230 km'
+      },
+      {
+        route: 'Kandy - Galle',
+        adultPrice: 320,
+        childPrice: 160,
+        distance: '160 km'
       }
     ];
 
     res.status(200).json({
       success: true,
-      data: pricingRules,
-      message: 'Pricing rules retrieved successfully'
+      data: basicPricing,
+      message: 'Basic place-to-place pricing retrieved successfully',
+      note: 'Adult price for 16+ years, Child price (half rate) for under 16 years'
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error retrieving pricing rules',
+      message: 'Error retrieving pricing information',
       error: error.message
     });
   }
 });
 
-/**
- * @swagger
- * /api/pricing:
- *   post:
- *     summary: Create new pricing rule
- *     tags: [Pricing]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - routeId
- *               - baseFare
- *               - busType
- *             properties:
- *               routeId:
- *                 type: string
- *                 example: "68e676d44b1fa32c8ada8725"
- *               baseFare:
- *                 type: number
- *                 example: 150
- *               distanceRate:
- *                 type: number
- *                 example: 5.5
- *               minimumFare:
- *                 type: number
- *                 example: 100
- *               maximumFare:
- *                 type: number
- *                 example: 800
- *               busType:
- *                 type: string
- *                 example: "standard"
- *     responses:
- *       201:
- *         description: Pricing rule created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       example: "1234567890"
- *                     routeId:
- *                       type: string
- *                       example: "68e676d44b1fa32c8ada8725"
- *                     baseFare:
- *                       type: number
- *                       example: 150
- *                     busType:
- *                       type: string
- *                       example: "standard"
- *                     isActive:
- *                       type: boolean
- *                       example: true
- *                 message:
- *                   type: string
- *                   example: "Pricing rule created successfully"
- *       400:
- *         $ref: '#/components/schemas/Error'
- *       401:
- *         $ref: '#/components/schemas/Error'
- *       403:
- *         $ref: '#/components/schemas/Error'
- *       500:
- *         $ref: '#/components/schemas/Error'
- */
-router.post('/', authenticate, authorize('admin', 'operator'), async (req, res) => {
-  try {
-    const { routeId, baseFare, busType } = req.body;
 
-    const newPricingRule = {
-      id: Date.now().toString(),
-      routeId,
-      baseFare,
-      busType,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    res.status(201).json({
-      success: true,
-      data: newPricingRule,
-      message: 'Pricing rule created successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error creating pricing rule',
-      error: error.message
-    });
-  }
-});
 
 export default router;

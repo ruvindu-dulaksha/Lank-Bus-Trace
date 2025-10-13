@@ -110,9 +110,9 @@ export const liveSearch = async (req, res) => {
           username: trip.conductorId.username
         } : null
       },
-      availability: {
-        seatsAvailable: (trip.busId?.capacity?.seating || 0) - (trip.passengerCount || 0),
-        totalSeats: trip.busId?.capacity?.seating || 0
+      capacity: {
+        totalSeats: trip.busId?.capacity?.seating || 0,
+        currentPassengers: trip.passengerCount || 0
       },
       fare: trip.estimatedFare || null,
       delay: trip.delayMinutes || 0

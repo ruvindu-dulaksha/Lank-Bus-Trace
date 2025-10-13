@@ -934,10 +934,6 @@ curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=202
         description: 'Driver-specific endpoints for trip management'
       },
       {
-        name: 'Conductor',
-        description: 'Conductor-specific endpoints for trip assistance'
-      },
-      {
         name: 'Operator',
         description: 'Bus operator management and fleet oversight'
       }

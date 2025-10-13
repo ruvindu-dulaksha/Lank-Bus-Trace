@@ -18,8 +18,7 @@ const passengerInfoSchema = new mongoose.Schema({
   fare: {
     type: Number,
     min: [0, 'Fare cannot be negative']
-  },
-  ticketNumber: String
+  }
 }, { _id: true });
 
 const tripStatusUpdateSchema = new mongoose.Schema({

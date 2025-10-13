@@ -373,10 +373,6 @@ export const validateRouteSearch = [
     .optional()
     .isInt({ min: 0, max: 120 })
     .withMessage('Passenger age must be between 0 and 120'),
-  query('ticketType')
-    .optional()
-    .isIn(['adult', 'child'])
-    .withMessage('Ticket type must be either adult or child'),
   query('passengers')
     .optional()
     .isInt({ min: 1, max: 50 })
