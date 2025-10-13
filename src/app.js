@@ -32,7 +32,6 @@ import pricingRoutes from './routes/pricing.js';
 import seasonsRoutes from './routes/seasons.js';
 import reportsRoutes from './routes/reports.js';
 import driverRoutes from './routes/driver.js';
-import conductorRoutes from './routes/conductor.js';
 import operatorRoutes from './routes/operator.js';
 
 // Load environment variables
@@ -218,7 +217,6 @@ app.use('/api/pricing', pricingRoutes);
 app.use('/api/seasons', seasonsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/driver', driverRoutes);
-app.use('/api/conductor', conductorRoutes);
 app.use('/api/operator', operatorRoutes);
 
 // Root endpoint
@@ -279,7 +277,6 @@ app.get('/api', (req, res) => {
       seasons: '/api/seasons',
       reports: '/api/reports',
       driver: '/api/driver',
-      conductor: '/api/conductor',
       operator: '/api/operator',
       system: '/api/system'
     },

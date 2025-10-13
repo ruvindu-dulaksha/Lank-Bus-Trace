@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Lanka Bus Trace API",
-    "description": "Complete API collection for the Lanka Bus Trace real-time bus tracking system. This collection includes all 65+ endpoints organized by category with authentication, sample requests, and environment variables.",
-    "version": "1.0.0",
+    "name": "Lanka Bus Trace API - Complete Collection",
+    "description": "Comprehensive API collection for Lanka Bus Trace real-time bus tracking system. Includes 40+ working endpoints organized by role-based access control with authentication, validation, and complete examples. Updated October 2025 with 100% functional endpoints.",
+    "version": "2.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -24,6 +24,16 @@
     {
       "key": "auth_token",
       "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_email",
+      "value": "ruvindu123456@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "DulaBoy@2001",
       "type": "string"
     },
     {

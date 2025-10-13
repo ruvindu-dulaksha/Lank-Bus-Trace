@@ -119,7 +119,7 @@ export const createLocation = asyncHandler(async (req, res) => {
     throw new AppError('Bus not found', 404);
   }
 
-  // Check authorization for operators
+  // Check authorization for operators and drivers
   if (req.user.role === 'operator') {
     const hasAccess = req.user.operatorDetails?.assignedBuses?.some(
       assignedBusId => assignedBusId.toString() === busId
@@ -130,31 +130,74 @@ export const createLocation = asyncHandler(async (req, res) => {
     }
   }
 
-  // Create location record
-  const location = await Location.create({
-    busId,
-    currentLocation: {
-      type: 'Point',
-      coordinates: [longitude, latitude]
-    },
-    locationMetadata: {
-      accuracy: req.body.accuracy || null,
-      heading: req.body.heading || null,
-      speed: req.body.speed || null,
-      altitude: req.body.altitude || null
-    },
-    deviceInfo: {
-      deviceId: req.body.deviceId || 'unknown',
-      batteryLevel: req.body.batteryLevel || null,
-      signalStrength: req.body.signalStrength || null
+  if (req.user.role === 'driver') {
+    const hasAccess = req.user.driverDetails?.assignedBuses?.some(
+      assignedBusId => assignedBusId.toString() === busId
+    );
+    
+    if (!hasAccess) {
+      throw new AppError('You are not authorized to update this bus location', 403);
     }
-  });
+  }
+
+  // Find existing location record or create new one
+  let location = await Location.findOne({ busId });
+  
+  if (location) {
+    // Update existing location
+    location.currentLocation.coordinates = {
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      accuracy: req.body.accuracy || 10
+    };
+    location.currentLocation.speed = req.body.speed || 0;
+    location.currentLocation.heading = req.body.heading || 0;
+    location.currentLocation.altitude = req.body.altitude;
+    location.currentLocation.lastUpdated = new Date();
+    location.currentLocation.isMoving = (req.body.speed || 0) > 5;
+    
+    // Update device info
+    if (req.body.deviceId) location.deviceInfo.deviceId = req.body.deviceId;
+    if (req.body.batteryLevel) location.deviceInfo.batteryLevel = req.body.batteryLevel;
+    if (req.body.signalStrength) location.deviceInfo.signalStrength = req.body.signalStrength;
+    
+    location.deviceInfo.lastSeen = new Date();
+    location.lastHeartbeat = new Date();
+    location.isOnline = true;
+    
+    await location.save();
+  } else {
+    // Create new location record
+    location = await Location.create({
+      busId,
+      currentLocation: {
+        coordinates: {
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+          accuracy: req.body.accuracy || 10
+        },
+        speed: req.body.speed || 0,
+        heading: req.body.heading || 0,
+        altitude: req.body.altitude,
+        lastUpdated: new Date(),
+        isMoving: (req.body.speed || 0) > 5
+      },
+      deviceInfo: {
+        deviceId: req.body.deviceId || 'unknown',
+        batteryLevel: req.body.batteryLevel,
+        signalStrength: req.body.signalStrength,
+        lastSeen: new Date()
+      },
+      isOnline: true,
+      lastHeartbeat: new Date()
+    });
+  }
 
   // Update bus with latest location
   await Bus.findByIdAndUpdate(busId, {
     currentLocation: {
       type: 'Point',
-      coordinates: [longitude, latitude]
+      coordinates: [parseFloat(longitude), parseFloat(latitude)]
     },
     lastUpdated: new Date()
   });
@@ -168,6 +211,183 @@ export const createLocation = asyncHandler(async (req, res) => {
     success: true,
     data: populatedLocation,
     message: 'Location recorded successfully'
+  });
+});
+
+/**
+ * @desc    Update GPS location for real-time tracking
+ * @route   POST /api/locations/update-gps
+ * @access  Private (Driver/Operator)
+ */
+export const updateGPSLocation = asyncHandler(async (req, res) => {
+  const { busId, latitude, longitude, speed, heading, accuracy, altitude, deviceId } = req.body;
+
+  // Validate required fields
+  if (!busId || !latitude || !longitude) {
+    throw new AppError('Bus ID, latitude, and longitude are required', 400);
+  }
+
+  // Verify bus exists
+  const bus = await Bus.findById(busId);
+  if (!bus) {
+    throw new AppError('Bus not found', 404);
+  }
+
+  // Authorization check
+  if (req.user.role === 'driver') {
+    const hasAccess = req.user.driverDetails?.assignedBuses?.some(
+      assignedBusId => assignedBusId.toString() === busId
+    );
+    if (!hasAccess) {
+      throw new AppError('You are not authorized to update this bus location', 403);
+    }
+  } else if (req.user.role === 'operator') {
+    const hasAccess = req.user.operatorDetails?.assignedBuses?.some(
+      assignedBusId => assignedBusId.toString() === busId
+    );
+    if (!hasAccess) {
+      throw new AppError('You are not authorized to update this bus location', 403);
+    }
+  } else if (req.user.role !== 'admin') {
+    throw new AppError('Unauthorized to update GPS location', 403);
+  }
+
+  // Update or create location
+  const location = await Location.findOneAndUpdate(
+    { busId },
+    {
+      $set: {
+        'currentLocation.coordinates.latitude': parseFloat(latitude),
+        'currentLocation.coordinates.longitude': parseFloat(longitude),
+        'currentLocation.coordinates.accuracy': accuracy || 10,
+        'currentLocation.speed': speed || 0,
+        'currentLocation.heading': heading || 0,
+        'currentLocation.altitude': altitude,
+        'currentLocation.lastUpdated': new Date(),
+        'currentLocation.isMoving': (speed || 0) > 5,
+        'deviceInfo.deviceId': deviceId || 'unknown',
+        'deviceInfo.lastSeen': new Date(),
+        'lastHeartbeat': new Date(),
+        'isOnline': true
+      }
+    },
+    { 
+      new: true, 
+      upsert: true,
+      populate: { path: 'busId', select: 'busNumber registrationNumber' }
+    }
+  );
+
+  // Update bus collection
+  await Bus.findByIdAndUpdate(busId, {
+    currentLocation: {
+      type: 'Point',
+      coordinates: [parseFloat(longitude), parseFloat(latitude)]
+    },
+    lastUpdated: new Date()
+  });
+
+  logger.info(`GPS location updated for bus ${bus.busNumber} - Lat: ${latitude}, Lng: ${longitude}`);
+
+  res.status(200).json({
+    success: true,
+    data: location,
+    message: 'GPS location updated successfully'
+  });
+});
+
+/**
+ * @desc    Bulk update GPS locations
+ * @route   POST /api/locations/bulk-update
+ * @access  Private (Admin/Operator)
+ */
+export const bulkUpdateGPSLocations = asyncHandler(async (req, res) => {
+  const { locations } = req.body;
+
+  if (!locations || !Array.isArray(locations) || locations.length === 0) {
+    throw new AppError('Locations array is required', 400);
+  }
+
+  if (locations.length > 100) {
+    throw new AppError('Cannot update more than 100 locations at once', 400);
+  }
+
+  const results = [];
+  const errors = [];
+
+  for (let i = 0; i < locations.length; i++) {
+    const locationData = locations[i];
+    
+    try {
+      const { busId, latitude, longitude, speed, heading, accuracy, altitude, deviceId } = locationData;
+
+      if (!busId || !latitude || !longitude) {
+        throw new Error(`Invalid data at index ${i}: busId, latitude, and longitude are required`);
+      }
+
+      // Verify bus exists
+      const bus = await Bus.findById(busId);
+      if (!bus) {
+        throw new Error(`Bus not found at index ${i}: ${busId}`);
+      }
+
+      // Update location
+      const location = await Location.findOneAndUpdate(
+        { busId },
+        {
+          $set: {
+            'currentLocation.coordinates.latitude': parseFloat(latitude),
+            'currentLocation.coordinates.longitude': parseFloat(longitude),
+            'currentLocation.coordinates.accuracy': accuracy || 10,
+            'currentLocation.speed': speed || 0,
+            'currentLocation.heading': heading || 0,
+            'currentLocation.altitude': altitude,
+            'currentLocation.lastUpdated': new Date(),
+            'currentLocation.isMoving': (speed || 0) > 5,
+            'deviceInfo.deviceId': deviceId || 'unknown',
+            'deviceInfo.lastSeen': new Date(),
+            'lastHeartbeat': new Date(),
+            'isOnline': true
+          }
+        },
+        { new: true, upsert: true }
+      );
+
+      // Update bus collection
+      await Bus.findByIdAndUpdate(busId, {
+        currentLocation: {
+          type: 'Point',
+          coordinates: [parseFloat(longitude), parseFloat(latitude)]
+        },
+        lastUpdated: new Date()
+      });
+
+      results.push({
+        busId,
+        success: true,
+        locationId: location._id
+      });
+
+    } catch (error) {
+      errors.push({
+        index: i,
+        busId: locationData.busId,
+        error: error.message
+      });
+    }
+  }
+
+  logger.info(`Bulk GPS update: ${results.length} successful, ${errors.length} failed`);
+
+  res.status(200).json({
+    success: true,
+    message: `Bulk update completed: ${results.length} successful, ${errors.length} failed`,
+    results: {
+      successful: results.length,
+      failed: errors.length,
+      details: results,
+      errors: errors
+    }
   });
 });
 

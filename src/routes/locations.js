@@ -3,6 +3,8 @@ import {
   getAllLocations,
   getLocation,
   createLocation,
+  updateGPSLocation,
+  bulkUpdateGPSLocations,
   getLocationsByBus,
   getNearbyBuses,
   getLocationStats,
@@ -339,7 +341,134 @@ router.get('/:id', authenticate, getLocation);
  *       404:
  *         description: Bus not found
  */
-router.post('/', authenticate, authorize('admin', 'operator'), validateCoordinates, createLocation);
+router.post('/', authenticate, authorize('admin', 'operator', 'driver'), validateCoordinates, createLocation);
+
+/**
+ * @swagger
+ * /api/locations/update-gps:
+ *   post:
+ *     summary: Update GPS location for real-time tracking
+ *     tags: [Locations]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - busId
+ *               - latitude
+ *               - longitude
+ *             properties:
+ *               busId:
+ *                 type: string
+ *                 description: Bus ID
+ *               latitude:
+ *                 type: number
+ *                 minimum: -90
+ *                 maximum: 90
+ *                 description: Latitude coordinate
+ *               longitude:
+ *                 type: number
+ *                 minimum: -180
+ *                 maximum: 180
+ *                 description: Longitude coordinate
+ *               speed:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Speed in km/h
+ *               heading:
+ *                 type: number
+ *                 minimum: 0
+ *                 maximum: 360
+ *                 description: Direction of travel in degrees
+ *               accuracy:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: GPS accuracy in meters
+ *               altitude:
+ *                 type: number
+ *                 description: Altitude in meters
+ *               deviceId:
+ *                 type: string
+ *                 description: GPS device identifier
+ *     responses:
+ *       200:
+ *         description: GPS location updated successfully
+ *       400:
+ *         description: Invalid GPS data
+ *       403:
+ *         description: Not authorized to update this bus location
+ *       404:
+ *         description: Bus not found
+ */
+router.post('/update-gps', authenticate, authorize('admin', 'operator', 'driver'), validateCoordinates, updateGPSLocation);
+
+/**
+ * @swagger
+ * /api/locations/bulk-update:
+ *   post:
+ *     summary: Bulk update GPS locations
+ *     tags: [Locations]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - locations
+ *             properties:
+ *               locations:
+ *                 type: array
+ *                 maxItems: 100
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - busId
+ *                     - latitude
+ *                     - longitude
+ *                   properties:
+ *                     busId:
+ *                       type: string
+ *                     latitude:
+ *                       type: number
+ *                       minimum: -90
+ *                       maximum: 90
+ *                     longitude:
+ *                       type: number
+ *                       minimum: -180
+ *                       maximum: 180
+ *                     speed:
+ *                       type: number
+ *                       minimum: 0
+ *                     heading:
+ *                       type: number
+ *                       minimum: 0
+ *                       maximum: 360
+ *                     accuracy:
+ *                       type: number
+ *                       minimum: 0
+ *                     altitude:
+ *                       type: number
+ *                     deviceId:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Bulk update completed
+ *       400:
+ *         description: Invalid bulk data
+ *       403:
+ *         description: Not authorized
+ */
+router.post('/bulk-update', authenticate, authorize('admin', 'operator'), bulkUpdateGPSLocations);
+
+router.post('/bulk-update', authenticate, authorize('admin', 'operator'), bulkUpdateGPSLocations);
 
 /**
  * @swagger

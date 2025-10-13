@@ -84,7 +84,7 @@ const router = express.Router();
  *           date: "2025-10-11"
  *           time: "09:00"
  */
-router.get('/live-search', authenticate, authorize('admin', 'operator', 'commuter', 'driver', 'conductor'), liveSearch);
+router.get('/live-search', authenticate, authorize('admin', 'operator', 'commuter', 'driver'), liveSearch);
 
 /**
  * @swagger
@@ -161,6 +161,6 @@ router.get('/live-search', authenticate, authorize('admin', 'operator', 'commute
  *           type: "all"
  *           limit: 10
  */
-router.get('/search', authenticate, authorize('admin', 'operator', 'commuter', 'driver', 'conductor'), generalSearch);
+router.get('/search', authenticate, authorize('admin', 'operator', 'commuter', 'driver'), generalSearch);
 
 export default router;

@@ -28,8 +28,8 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: {
-      values: ['admin', 'operator', 'commuter', 'driver', 'conductor', 'dispatcher'],
-      message: 'Role must be admin, operator, commuter, driver, conductor, or dispatcher'
+      values: ['admin', 'operator', 'commuter', 'driver', 'dispatcher'],
+      message: 'Role must be admin, operator, commuter, driver, or dispatcher'
     },
     default: 'commuter'
   },
@@ -127,34 +127,18 @@ const userSchema = new mongoose.Schema({
       name: String,
       phone: String,
       relationship: String
-    }
-  },
-  conductorDetails: {
-    employeeId: {
-      type: String,
-      trim: true,
-      validate: {
-        validator: function(v) {
-          return !this.role || this.role !== 'conductor' || (v && v.length > 0);
-        },
-        message: 'Employee ID is required for conductors'
+    },
+    // Conductor-related fields (when driver also acts as conductor)
+    conductorInfo: {
+      employeeId: {
+        type: String,
+        trim: true
+      },
+      cashHandlingCertExpiry: Date,
+      isConductor: {
+        type: Boolean,
+        default: false
       }
-    },
-    experienceYears: {
-      type: Number,
-      min: [0, 'Experience years cannot be negative'],
-      max: [50, 'Experience years seems too high']
-    },
-    assignedRoutes: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Route'
-    }],
-    trainingCertifications: [String],
-    cashHandlingCertExpiry: Date,
-    emergencyContact: {
-      name: String,
-      phone: String,
-      relationship: String
     }
   },
   apiKey: {

@@ -112,6 +112,25 @@ const locationSchema = new mongoose.Schema({
         default: 10
       }
     },
+    geoLocation: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point'
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true,
+        validate: {
+          validator: function(coords) {
+            return coords.length === 2 && 
+                   coords[0] >= -180 && coords[0] <= 180 && // longitude
+                   coords[1] >= -90 && coords[1] <= 90;     // latitude
+          },
+          message: 'Invalid GeoJSON coordinates'
+        }
+      }
+    },
     address: {
       type: String,
       trim: true
@@ -299,7 +318,7 @@ locationSchema.virtual('isDeviceOnline').get(function() {
 });
 
 // Create 2dsphere index for geospatial queries
-locationSchema.index({ 'currentLocation.coordinates': '2dsphere' });
+locationSchema.index({ 'currentLocation.geoLocation': '2dsphere' });
 
 // Other indexes (excluding busId which has unique: true)
 locationSchema.index({ tripId: 1 });
@@ -317,6 +336,14 @@ locationSchema.index({
 
 // Pre-save middleware
 locationSchema.pre('save', function(next) {
+  // Sync coordinates: ensure geoLocation is updated when coordinates change
+  if (this.currentLocation.coordinates.latitude && this.currentLocation.coordinates.longitude) {
+    this.currentLocation.geoLocation = {
+      type: 'Point',
+      coordinates: [this.currentLocation.coordinates.longitude, this.currentLocation.coordinates.latitude]
+    };
+  }
+  
   // Update isMoving based on speed
   this.currentLocation.isMoving = (this.currentLocation.speed || 0) > 5;
   
@@ -348,7 +375,7 @@ locationSchema.pre('save', function(next) {
 // Static method to find locations within radius
 locationSchema.statics.findNearby = function(latitude, longitude, radiusInKm = 10) {
   return this.find({
-    'currentLocation.coordinates': {
+    'currentLocation.geoLocation': {
       $near: {
         $geometry: {
           type: 'Point',
