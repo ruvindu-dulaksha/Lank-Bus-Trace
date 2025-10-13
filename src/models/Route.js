@@ -129,6 +129,16 @@ const routeSchema = new mongoose.Schema({
     },
     default: 'inter-provincial'
   },
+  province: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Province name cannot exceed 50 characters']
+  },
+  provinces: [{
+    type: String,
+    trim: true,
+    maxlength: [50, 'Province name cannot exceed 50 characters']
+  }],
   operatingDays: {
     type: [String],
     enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],

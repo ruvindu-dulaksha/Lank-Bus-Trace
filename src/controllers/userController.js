@@ -1,3 +1,46 @@
+/**
+ * @desc    Get user analytics
+ * @route   GET /api/users/analytics
+ * @access  Private (Admin only)
+ */
+export const getUserAnalytics = asyncHandler(async (req, res) => {
+  // Example analytics: total users, active users, new users this month
+  const totalUsers = await User.countDocuments();
+  const activeUsers = await User.countDocuments({ isActive: true });
+  const newUsersThisMonth = await User.countDocuments({
+    createdAt: {
+      $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    }
+  });
+  res.status(200).json({
+    success: true,
+    data: {
+      totalUsers,
+      activeUsers,
+      newUsersThisMonth
+    }
+  });
+});
+
+/**
+ * @desc    Search users
+ * @route   GET /api/users/search
+ * @access  Private (Admin only)
+ */
+export const searchUsers = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+  if (!q) {
+    return res.status(400).json({ success: false, message: 'Search query required' });
+  }
+  const users = await User.find({
+    $or: [
+      { username: { $regex: q, $options: 'i' } },
+      { email: { $regex: q, $options: 'i' } },
+      { fullName: { $regex: q, $options: 'i' } }
+    ]
+  }).select('-password -refreshTokens -passwordResetToken -passwordResetExpires');
+  res.status(200).json({ success: true, data: users });
+});
 import User from '../models/User.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import logger from '../config/logger.js';
@@ -153,12 +196,23 @@ export const updateUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // If role is being changed, handle operator details
+  // If role is being changed, handle operator/driver details
   if (role && role !== user.role) {
     if (role === 'operator' && !updateData.operatorDetails) {
       updateData.operatorDetails = {
         assignedRoutes: [],
         assignedBuses: []
+      };
+    } else if (role === 'driver' && !updateData.driverDetails) {
+      // Provide default driver details to satisfy validation requirements
+      updateData.driverDetails = {
+        licenseNumber: 'TEMP-' + Date.now(), // Temporary license number
+        licenseClass: 'B', // Default license class
+        licenseExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+        assignedBuses: [],
+        assignedRoutes: [],
+        experienceYears: 0,
+        trainingCertifications: []
       };
     } else if (role !== 'operator') {
       updateData.operatorDetails = undefined;
@@ -286,10 +340,10 @@ export const deleteUser = asyncHandler(async (req, res) => {
 export const updateUserRole = asyncHandler(async (req, res) => {
   const { role } = req.body;
 
-  if (!role || !['admin', 'operator', 'commuter'].includes(role)) {
+  if (!role || !['admin', 'operator', 'commuter', 'driver'].includes(role)) {
     return res.status(400).json({
       success: false,
-      message: 'Valid role required (admin, operator, commuter)'
+      message: 'Valid role required (admin, operator, commuter, driver)'
     });
   }
 

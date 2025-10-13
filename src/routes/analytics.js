@@ -3,6 +3,17 @@ import { getPerformanceAnalytics, getUsageAnalytics } from '../controllers/analy
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
+// Root analytics endpoint: summary of available analytics
+router.get('/', authenticate, authorize('admin', 'operator'), (req, res) => {
+	res.status(200).json({
+		success: true,
+		endpoints: [
+			'/api/analytics/performance',
+			'/api/analytics/usage'
+		],
+		message: 'Available analytics endpoints: performance, usage.'
+	});
+});
 
 /**
  * @swagger

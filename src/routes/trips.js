@@ -1,4 +1,5 @@
 import express from 'express';
+import Trip from '../models/Trip.js';
 import {
   getAllTrips,
   getTrip,
@@ -168,6 +169,92 @@ router.get('/stats', authenticate, authorize('admin'), getTripStats);
  *         description: List of trips for the route
  */
 router.get('/route/:routeId', authenticate, getTripsByRoute);
+
+/**
+ * @swagger
+ * /api/trips/active:
+ *   get:
+ *     summary: Get all active trips
+ *     tags: [Trips]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of active trips
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Trip'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ */
+router.get('/active', validatePagination, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      status: { $in: ['scheduled', 'boarding', 'departed', 'in-transit', 'arrived'] },
+      isActive: true
+    };
+
+    const [trips, total] = await Promise.all([
+      Trip.find(filter)
+        .populate('routeId', 'routeName origin destination distance')
+        .populate('busId', 'busNumber registrationNumber operationalStatus')
+        .populate('driverId', 'username personalInfo.name')
+        .sort({ 'schedule.plannedDeparture': 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Trip.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: trips,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      },
+      message: `Found ${total} active trips`
+    });
+  } catch (error) {
+    console.error('Error fetching active trips:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving active trips',
+      error: error.message
+    });
+  }
+});
+
+// ...existing code...
 
 /**
  * @swagger
@@ -466,4 +553,90 @@ router.patch('/:id/status', authenticate, authorize('admin', 'operator'), update
  */
 router.post('/:id/delay', authenticate, authorize('admin', 'operator'), addTripDelay);
 
+/**
+ * @swagger
+ * /api/trips/active:
+ *   get:
+ *     summary: Get all active trips
+ *     tags: [Trips]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of active trips
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Trip'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ */
+router.get('/active', validatePagination, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      status: { $in: ['scheduled', 'boarding', 'departed', 'in-transit', 'arrived'] },
+      isActive: true
+    };
+
+    const [trips, total] = await Promise.all([
+      Trip.find(filter)
+        .populate('routeId', 'routeName origin destination distance')
+        .populate('busId', 'busNumber registrationNumber operationalStatus')
+        .populate('driverId', 'username personalInfo.name')
+        .sort({ 'schedule.plannedDeparture': 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Trip.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: trips,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      },
+      message: `Found ${total} active trips`
+    });
+  } catch (error) {
+    console.error('Error fetching active trips:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving active trips',
+      error: error.message
+    });
+  }
+});
+
+// Place parameterized route at the end
+router.get('/:id', authenticate, getTrip);
 export default router;

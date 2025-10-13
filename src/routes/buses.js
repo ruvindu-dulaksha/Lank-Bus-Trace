@@ -1,4 +1,5 @@
 import express from 'express';
+import Bus from '../models/Bus.js';
 import {
   getAllBuses,
   getBus,
@@ -220,6 +221,342 @@ router.get('/route/:routeId', authenticate, getBusesByRoute);
 
 /**
  * @swagger
+ * /api/buses/active:
+ *   get:
+ *     summary: Get all active buses
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of active buses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Bus'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ */
+router.get('/active', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      operationalStatus: 'active',
+      isActive: true
+    };
+
+    const [buses, total] = await Promise.all([
+      Bus.find(filter)
+        .select('registrationNumber busNumber operatorInfo.operatorName vehicleDetails capacity busType operationalStatus currentLocation isActive')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Bus.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: buses,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      },
+      message: `Found ${total} active buses`
+    });
+  } catch (error) {
+    console.error('Error fetching active buses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving active buses',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/buses/{id}:
+ *   get:
+ *     summary: Get bus by ID
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bus ID
+ *     responses:
+ *       200:
+ *         description: Bus details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Bus'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get('/:id', getBus); // Made public for passenger information
+
+/**
+ * @swagger
+ * /api/buses/active:
+ *   get:
+ *     summary: Get all active buses
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of active buses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Bus'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ */
+router.get('/active', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      operationalStatus: 'active',
+      isActive: true
+    };
+
+    const [buses, total] = await Promise.all([
+      Bus.find(filter)
+        .select('registrationNumber busNumber operatorInfo.operatorName vehicleDetails capacity busType operationalStatus currentLocation isActive')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Bus.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: buses,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      },
+      message: `Found ${total} active buses`
+    });
+  } catch (error) {
+    console.error('Error fetching active buses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving active buses',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/buses/{id}:
+ *   get:
+ *     summary: Get bus by ID
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bus ID
+ *     responses:
+ *       200:
+ *         description: Bus details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Bus'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get('/:id', getBus); // Made public for passenger information
+
+/**
+ * @swagger
+ * /api/buses/active:
+ *   get:
+ *     summary: Get all active buses
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of active buses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Bus'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ */
+router.get('/active', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      operationalStatus: 'active',
+      isActive: true
+    };
+
+    const [buses, total] = await Promise.all([
+      Bus.find(filter)
+        .select('registrationNumber busNumber operatorInfo.operatorName vehicleDetails capacity busType operationalStatus currentLocation isActive')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Bus.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: buses,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      },
+      message: `Found ${total} active buses`
+    });
+  } catch (error) {
+    console.error('Error fetching active buses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving active buses',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/buses/{id}:
+ *   get:
+ *     summary: Get bus by ID
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bus ID
+ *     responses:
+ *       200:
+ *         description: Bus details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Bus'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get('/:id', getBus); // Made public for passenger information
+
+/**
+ * @swagger
  * /api/buses/{id}:
  *   get:
  *     summary: Get bus by ID
@@ -428,5 +765,74 @@ router.post('/:id/location', authenticate, authorize('admin', 'operator'), autho
  *         description: Bus location history
  */
 router.get('/:id/location-history', authenticate, getBusLocationHistory);
+
+/**
+ * @swagger
+ * /api/buses/active:
+ *   get:
+ *     summary: Get all active buses
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of active buses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Bus'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ */
+router.get('/test-active', async (req, res) => {
+  console.log('Starting active buses query...');
+  try {
+    console.log('Bus model:', typeof Bus);
+    console.log('Query starting...');
+
+    // Just return count first to debug - disable virtuals
+    const total = await Bus.find({
+      operationalStatus: 'active',
+      isActive: true
+    }).countDocuments();
+
+    console.log('Query completed, total:', total);
+
+    res.status(200).json({
+      success: true,
+      data: [],
+      total,
+      message: `Found ${total} active buses`
+    });
+  } catch (error) {
+    console.error('Error fetching active buses:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving active buses',
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
 
 export default router;

@@ -18,7 +18,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "https://ruvindu-dulaksha.me",
+      "value": "http://localhost:3000",
       "type": "string"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "key": "admin_password",
-      "value": "DulaBoy@2001",
+      "value": "NewPassword123!",
       "type": "string"
     },
     {
@@ -147,7 +147,7 @@
           },
           "response": []
         },
-        {
+                {
           "name": "Login User",
           "event": [
             {
@@ -177,7 +177,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@ntc.gov.lk\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/auth/login",
@@ -1334,8 +1334,30 @@
       ]
     },
     {
-      "name": "Role-Specific Endpoints",
+      "name": "Driver",
       "item": [
+        {
+          "name": "Driver Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
         {
           "name": "Driver Profile",
           "request": {
@@ -1400,35 +1422,14 @@
             }
           },
           "response": []
-        },
+        }
+      ]
+    },
+    {
+      "name": "Operator",
+      "item": [
         {
-          "name": "Conductor Profile",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/conductor/profile",
-              "host": ["{{base_url}}"],
-              "path": ["api", "conductor", "profile"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Conductor Dashboard",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/conductor/dashboard",
-              "host": ["{{base_url}}"],
-              "path": ["api", "conductor", "dashboard"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Sell Ticket (Conductor)",
+          "name": "Operator Login",
           "request": {
             "method": "POST",
             "header": [
@@ -1439,25 +1440,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tripId\": \"{{trip_id}}\",\n  \"boardingStop\": \"Colombo Fort\",\n  \"alightingStop\": \"Kandy Central\",\n  \"fare\": 150,\n  \"passengerType\": \"adult\"\n}"
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/conductor/tickets/sell",
+              "raw": "{{base_url}}/api/auth/login",
               "host": ["{{base_url}}"],
-              "path": ["api", "conductor", "tickets", "sell"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Trip Passengers (Conductor)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/conductor/trips/{{trip_id}}/passengers",
-              "host": ["{{base_url}}"],
-              "path": ["api", "conductor", "trips", "{{trip_id}}", "passengers"]
+              "path": ["api", "auth", "login"]
             }
           },
           "response": []
@@ -1519,6 +1507,79 @@
               "raw": "{{base_url}}/api/operator/buses/{{bus_id}}/assign-route",
               "host": ["{{base_url}}"],
               "path": ["api", "operator", "buses", "{{bus_id}}", "assign-route"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Commuter",
+      "item": [
+        {
+          "name": "Commuter Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Routes (Commuter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/routes/search?from=Colombo&to=Kandy",
+              "host": ["{{base_url}}"],
+              "path": ["api", "routes", "search"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "Colombo"
+                },
+                {
+                  "key": "to",
+                  "value": "Kandy"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Live Search (Commuter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/search/live-search?q=Colombo&type=route",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search", "live-search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Colombo"
+                },
+                {
+                  "key": "type",
+                  "value": "route"
+                }
+              ]
             }
           },
           "response": []

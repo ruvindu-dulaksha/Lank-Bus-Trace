@@ -14,6 +14,17 @@ const generateToken = (userId) => {
   });
 };
 
+// Centralized cookie options helper
+const getCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  };
+};
+
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
@@ -61,12 +72,7 @@ export const register = asyncHandler(async (req, res) => {
 
   logger.info(`New user registered: ${username} (${role})`);
 
-  res.status(201).cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }).json({
+  res.status(201).cookie('token', token, getCookieOptions()).json({
     success: true,
     message: 'User registered successfully',
     data: {
@@ -101,12 +107,7 @@ export const login = asyncHandler(async (req, res) => {
 
     logger.info(`User logged in: ${user.username}`);
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }).json({
+    res.cookie('token', token, getCookieOptions()).json({
       success: true,
       message: 'Login successful',
       data: {
@@ -347,12 +348,10 @@ export const logout = asyncHandler(async (req, res) => {
 
   logger.info(`User logged out: ${req.user.username}`);
 
-  // Clear the authentication cookie
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
-  }).status(200).json({
+  // Clear the authentication cookie using same attributes (except maxAge)
+  const clearOpts = Object.assign({}, getCookieOptions());
+  delete clearOpts.maxAge;
+  res.clearCookie('token', clearOpts).status(200).json({
     success: true,
     message: 'Logged out successfully',
     tokenInvalidated: !!currentToken
@@ -479,21 +478,18 @@ export const clearBlacklist = asyncHandler(async (req, res) => {
     });
   }
 
-  const clearedCount = tokenBlacklistService.clearAll();
-  
+  // Use the TokenBlacklistService method to clear the blacklist and return the result
+  const result = tokenBlacklistService.clearBlacklist(req.user._id);
+
   logger.warn(`Token blacklist cleared by admin: ${req.user.username}`, {
     adminId: req.user._id,
-    clearedTokens: clearedCount,
-    timestamp: new Date().toISOString()
+    clearedTokens: result.clearedTokens,
+    timestamp: result.timestamp
   });
 
   res.json({
     success: true,
     message: 'Token blacklist cleared successfully',
-    data: {
-      clearedTokens: clearedCount,
-      clearedBy: req.user.username,
-      timestamp: new Date().toISOString()
-    }
+    data: result
   });
 });

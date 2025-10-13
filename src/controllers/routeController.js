@@ -806,8 +806,15 @@ export const getRoutesByProvince = asyncHandler(async (req, res) => {
   const { limit = 50 } = req.query;
 
   const routes = await Route.find({
-    provinces: { $in: [province] },
-    isActive: true
+    $and: [
+      {
+        $or: [
+          { province: { $regex: province, $options: 'i' } },
+          { provinces: { $in: [province, province.toLowerCase(), province.toUpperCase()] } }
+        ]
+      },
+      { isActive: true }
+    ]
   })
   .limit(limit * 1)
   .sort({ routeNumber: 1 });

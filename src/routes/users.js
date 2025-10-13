@@ -8,7 +8,10 @@ import {
   toggleUserStatus,
   getUserStats,
   assignRoutesToOperator,
-  assignBusesToOperator
+  assignBusesToOperator,
+  getCurrentUser,
+  searchUsers,
+  getUserAnalytics
 } from '../controllers/userController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { 
@@ -17,6 +20,10 @@ import {
 } from '../middleware/validation.js';
 
 const router = express.Router();
+// Explicit routes first
+router.get('/profile', authenticate, getCurrentUser);
+router.get('/search', authenticate, authorize('admin'), searchUsers);
+router.get('/analytics', authenticate, authorize('admin'), getUserAnalytics);
 
 /**
  * @swagger
@@ -43,7 +50,7 @@ const router = express.Router();
  *         name: role
  *         schema:
  *           type: string
- *           enum: [admin, operator, commuter]
+ *           enum: [admin, operator, commuter, driver]
  *         description: Filter by user role
  *       - in: query
  *         name: isActive
@@ -115,6 +122,7 @@ router.get('/stats', authenticate, authorize('admin'), getUserStats);
  *       403:
  *         description: Admin access required
  */
+// Parameterized routes (must be last)
 router.get('/:id', authenticate, authorize('admin'), getUser);
 
 /**
@@ -150,7 +158,7 @@ router.get('/:id', authenticate, authorize('admin'), getUser);
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [admin, operator, commuter]
+ *                 enum: [admin, operator, commuter, driver]
  *               isActive:
  *                 type: boolean
  *               operatorDetails:
@@ -229,7 +237,7 @@ router.delete('/:id', authenticate, authorize('admin'), deleteUser);
  *             properties:
  *               role:
  *                 type: string
- *                 enum: [admin, operator, commuter]
+ *                 enum: [admin, operator, commuter, driver]
  *                 description: New role for the user
  *     responses:
  *       200:
@@ -353,3 +361,11 @@ router.post('/:id/assign-routes', authenticate, authorize('admin'), assignRoutes
 router.post('/:id/assign-buses', authenticate, authorize('admin'), assignBusesToOperator);
 
 export default router;
+// Parameterized routes (must be last)
+router.get('/:id', authenticate, authorize('admin'), getUser);
+router.put('/:id', authenticate, authorize('admin'), validateUserUpdate, updateUser);
+router.delete('/:id', authenticate, authorize('admin'), deleteUser);
+router.patch('/:id/role', authenticate, authorize('admin'), updateUserRole);
+router.patch('/:id/toggle', authenticate, authorize('admin'), toggleUserStatus);
+router.post('/:id/assign-routes', authenticate, authorize('admin'), assignRoutesToOperator);
+router.post('/:id/assign-buses', authenticate, authorize('admin'), assignBusesToOperator);

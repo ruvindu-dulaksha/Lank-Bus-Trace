@@ -520,8 +520,8 @@ export const validateUserUpdate = [
     .withMessage('Full name must be between 1 and 100 characters'),
   body('role')
     .optional()
-    .isIn(['admin', 'operator', 'commuter'])
-    .withMessage('Role must be admin, operator, or commuter'),
+    .isIn(['admin', 'operator', 'commuter', 'driver'])
+    .withMessage('Role must be admin, operator, commuter, or driver'),
   body('isActive')
     .optional()
     .isBoolean()
