@@ -8,6 +8,9 @@ import {
   getLocationsByBus,
   getNearbyBuses,
   getLocationStats,
+  getRealTimeLocations,
+  getLocationAnalytics,
+  getLocationHeatmap,
   cleanupOldLocations
 } from '../controllers/locationController.js';
 import { authenticate, authorize, authorizeOperator } from '../middleware/auth.js';
@@ -171,6 +174,89 @@ router.get('/search', validatePagination, getAllLocations); // Reuse getAllLocat
  *         description: Latitude and longitude are required
  */
 router.get('/nearby', validateNearbyQuery, getNearbyBuses);
+
+/**
+ * @swagger
+ * /api/locations/realtime:
+ *   get:
+ *     summary: Get real-time bus locations
+ *     tags: [Locations]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Maximum number of buses to return
+ *       - in: query
+ *         name: activeOnly
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Return only online buses
+ *     responses:
+ *       200:
+ *         description: List of real-time bus locations
+ */
+router.get('/realtime', getRealTimeLocations);
+
+/**
+ * @swagger
+ * /api/locations/analytics:
+ *   get:
+ *     summary: Get location analytics
+ *     tags: [Locations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [1h, 24h, 7d, 30d]
+ *           default: 24h
+ *         description: Time range for analytics
+ *     responses:
+ *       200:
+ *         description: Location analytics data
+ */
+router.get('/analytics', authenticate, authorize('admin', 'operator'), getLocationAnalytics);
+
+/**
+ * @swagger
+ * /api/locations/heatmap:
+ *   get:
+ *     summary: Get location heatmap data
+ *     tags: [Locations]
+ *     parameters:
+ *       - in: query
+ *         name: bounds
+ *         schema:
+ *           type: string
+ *         description: Bounding box as "lat1,lng1,lat2,lng2"
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [1h, 24h, 7d, all]
+ *           default: 24h
+ *         description: Time range for heatmap data
+ *       - in: query
+ *         name: busType
+ *         schema:
+ *           type: string
+ *         description: Filter by bus type
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 1000
+ *         description: Maximum number of points
+ *     responses:
+ *       200:
+ *         description: Heatmap data points
+ */
+router.get('/heatmap', getLocationHeatmap);
 
 /**
  * @swagger
@@ -466,8 +552,6 @@ router.post('/update-gps', authenticate, authorize('admin', 'operator', 'driver'
  *       403:
  *         description: Not authorized
  */
-router.post('/bulk-update', authenticate, authorize('admin', 'operator'), bulkUpdateGPSLocations);
-
 router.post('/bulk-update', authenticate, authorize('admin', 'operator'), bulkUpdateGPSLocations);
 
 /**

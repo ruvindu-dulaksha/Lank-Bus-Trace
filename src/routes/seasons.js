@@ -58,17 +58,18 @@ const router = express.Router();
  *       500:
  *         $ref: '#/components/schemas/Error'
  */
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const seasons = [
       {
         id: '1',
         name: 'Peak Season',
-        description: 'High demand period with increased fares',
+        description: 'High demand period with increased fares (December-January)',
         startDate: '2025-12-15',
         endDate: '2026-01-15',
         multiplier: 1.5,
         isActive: true,
+        routes: ['Colombo-Kandy', 'Colombo-Galle', 'Colombo-Negombo'],
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -80,6 +81,31 @@ router.get('/', authenticate, async (req, res) => {
         endDate: '2025-11-30',
         multiplier: 1.0,
         isActive: true,
+        routes: ['All Routes'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '3',
+        name: 'Festival Season',
+        description: 'Special pricing during major festivals (Sinhala New Year, Vesak)',
+        startDate: '2025-04-12',
+        endDate: '2025-04-16',
+        multiplier: 1.3,
+        isActive: true,
+        routes: ['Inter-Provincial Routes'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '4',
+        name: 'School Holiday Season',
+        description: 'Increased demand during school holidays',
+        startDate: '2025-08-01',
+        endDate: '2025-08-31',
+        multiplier: 1.2,
+        isActive: true,
+        routes: ['Tourist Destination Routes'],
         createdAt: new Date(),
         updatedAt: new Date()
       }

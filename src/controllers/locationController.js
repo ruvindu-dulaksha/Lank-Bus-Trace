@@ -150,6 +150,10 @@ export const createLocation = asyncHandler(async (req, res) => {
       longitude: parseFloat(longitude),
       accuracy: req.body.accuracy || 10
     };
+    location.currentLocation.geoLocation = {
+      type: 'Point',
+      coordinates: [parseFloat(longitude), parseFloat(latitude)]
+    };
     location.currentLocation.speed = req.body.speed || 0;
     location.currentLocation.heading = req.body.heading || 0;
     location.currentLocation.altitude = req.body.altitude;
@@ -175,6 +179,10 @@ export const createLocation = asyncHandler(async (req, res) => {
           latitude: parseFloat(latitude),
           longitude: parseFloat(longitude),
           accuracy: req.body.accuracy || 10
+        },
+        geoLocation: {
+          type: 'Point',
+          coordinates: [parseFloat(longitude), parseFloat(latitude)]
         },
         speed: req.body.speed || 0,
         heading: req.body.heading || 0,
@@ -656,6 +664,262 @@ export const getLocationStats = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Get real-time bus locations
+ * @route   GET /api/locations/realtime
+ * @access  Public
+ */
+export const getRealTimeLocations = asyncHandler(async (req, res) => {
+  const { limit = 50, activeOnly = true } = req.query;
+  
+  // Get latest location for each bus
+  const pipeline = [
+    // Match online buses if activeOnly is true
+    ...(activeOnly === 'true' ? [{ $match: { isOnline: true } }] : []),
+    
+    // Sort by bus and timestamp
+    { $sort: { busId: 1, 'currentLocation.lastUpdated': -1 } },
+    
+    // Group by bus to get latest location
+    {
+      $group: {
+        _id: '$busId',
+        latestLocation: { $first: '$$ROOT' }
+      }
+    },
+    
+    // Replace root with latest location
+    { $replaceRoot: { newRoot: '$latestLocation' } },
+    
+    // Limit results
+    { $limit: parseInt(limit) },
+    
+    // Populate bus details
+    {
+      $lookup: {
+        from: 'buses',
+        localField: 'busId',
+        foreignField: '_id',
+        as: 'bus',
+        pipeline: [
+          {
+            $project: {
+              busNumber: 1,
+              registrationNumber: 1,
+              'operatorInfo.companyName': 1,
+              busType: 1,
+              capacity: 1
+            }
+          }
+        ]
+      }
+    },
+    { $unwind: { path: '$bus', preserveNullAndEmptyArrays: true } }
+  ];
+  
+  const realTimeLocations = await Location.aggregate(pipeline);
+  
+  res.status(200).json({
+    success: true,
+    data: realTimeLocations,
+    count: realTimeLocations.length,
+    message: 'Real-time locations retrieved successfully'
+  });
+});
+
+/**
+ * @desc    Get location analytics
+ * @route   GET /api/locations/analytics
+ * @access  Private (Admin/Operator)
+ */
+export const getLocationAnalytics = asyncHandler(async (req, res) => {
+  const { timeRange = '24h' } = req.query;
+  
+  // Calculate time filter
+  let timeFilter = new Date();
+  switch (timeRange) {
+    case '1h':
+      timeFilter.setHours(timeFilter.getHours() - 1);
+      break;
+    case '24h':
+      timeFilter.setDate(timeFilter.getDate() - 1);
+      break;
+    case '7d':
+      timeFilter.setDate(timeFilter.getDate() - 7);
+      break;
+    case '30d':
+      timeFilter.setDate(timeFilter.getDate() - 30);
+      break;
+    default:
+      timeFilter.setDate(timeFilter.getDate() - 1);
+  }
+  
+  const analytics = await Promise.all([
+    // Total active buses
+    Location.countDocuments({ isOnline: true }),
+    
+    // Buses by connection status
+    Location.aggregate([
+      {
+        $group: {
+          _id: '$isOnline',
+          count: { $sum: 1 }
+        }
+      }
+    ]),
+    
+    // Recent activity
+    Location.aggregate([
+      {
+        $match: {
+          'currentLocation.lastUpdated': { $gte: timeFilter }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: '%Y-%m-%d %H:00',
+              date: '$currentLocation.lastUpdated'
+            }
+          },
+          locationUpdates: { $sum: 1 },
+          uniqueBuses: { $addToSet: '$busId' }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          locationUpdates: 1,
+          uniqueBusCount: { $size: '$uniqueBuses' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]),
+    
+    // Speed statistics
+    Location.aggregate([
+      { $match: { isOnline: true } },
+      {
+        $group: {
+          _id: null,
+          avgSpeed: { $avg: '$currentLocation.speed' },
+          maxSpeed: { $max: '$currentLocation.speed' },
+          movingBuses: {
+            $sum: {
+              $cond: [{ $gt: ['$currentLocation.speed', 5] }, 1, 0]
+            }
+          },
+          stoppedBuses: {
+            $sum: {
+              $cond: [{ $lte: ['$currentLocation.speed', 5] }, 1, 0]
+            }
+          }
+        }
+      }
+    ])
+  ]);
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      summary: {
+        totalActiveBuses: analytics[0],
+        timeRange,
+        generatedAt: new Date()
+      },
+      connectionStatus: analytics[1],
+      activityTrend: analytics[2],
+      speedStats: analytics[3][0] || { avgSpeed: 0, maxSpeed: 0, movingBuses: 0, stoppedBuses: 0 }
+    },
+    message: 'Location analytics retrieved successfully'
+  });
+});
+
+/**
+ * @desc    Get location heatmap data
+ * @route   GET /api/locations/heatmap
+ * @access  Public
+ */
+export const getLocationHeatmap = asyncHandler(async (req, res) => {
+  const { 
+    bounds,
+    timeRange = '24h',
+    busType,
+    limit = 1000
+  } = req.query;
+  
+  // Parse bounds if provided (format: "lat1,lng1,lat2,lng2")
+  let geoFilter = {};
+  if (bounds) {
+    const [lat1, lng1, lat2, lng2] = bounds.split(',').map(parseFloat);
+    geoFilter = {
+      'currentLocation.coordinates.latitude': { $gte: Math.min(lat1, lat2), $lte: Math.max(lat1, lat2) },
+      'currentLocation.coordinates.longitude': { $gte: Math.min(lng1, lng2), $lte: Math.max(lng1, lng2) }
+    };
+  }
+  
+  // Time filter
+  let timeFilter = {};
+  if (timeRange !== 'all') {
+    const timeAgo = new Date();
+    switch (timeRange) {
+      case '1h':
+        timeAgo.setHours(timeAgo.getHours() - 1);
+        break;
+      case '24h':
+        timeAgo.setDate(timeAgo.getDate() - 1);
+        break;
+      case '7d':
+        timeAgo.setDate(timeAgo.getDate() - 7);
+        break;
+    }
+    timeFilter = { 'currentLocation.lastUpdated': { $gte: timeAgo } };
+  }
+  
+  const pipeline = [
+    { $match: { ...geoFilter, ...timeFilter, isOnline: true } },
+    
+    // Populate bus info for filtering
+    {
+      $lookup: {
+        from: 'buses',
+        localField: 'busId',
+        foreignField: '_id',
+        as: 'bus'
+      }
+    },
+    { $unwind: { path: '$bus', preserveNullAndEmptyArrays: true } },
+    
+    // Filter by bus type if specified
+    ...(busType ? [{ $match: { 'bus.busType': busType } }] : []),
+    
+    // Project only needed fields
+    {
+      $project: {
+        latitude: '$currentLocation.coordinates.latitude',
+        longitude: '$currentLocation.coordinates.longitude',
+        speed: '$currentLocation.speed',
+        busNumber: '$bus.busNumber',
+        busType: '$bus.busType',
+        lastUpdated: '$currentLocation.lastUpdated'
+      }
+    },
+    
+    { $limit: parseInt(limit) }
+  ];
+  
+  const heatmapData = await Location.aggregate(pipeline);
+  
+  res.status(200).json({
+    success: true,
+    data: heatmapData,
+    count: heatmapData.length,
+    filters: { bounds, timeRange, busType },
+    message: 'Heatmap data retrieved successfully'
+  });
+});
+
+/**
  * @desc    Delete old location records
  * @route   DELETE /api/locations/cleanup
  * @access  Private (Admin only)
@@ -666,7 +930,7 @@ export const cleanupOldLocations = asyncHandler(async (req, res) => {
   cutoffDate.setDate(cutoffDate.getDate() - parseInt(daysOld));
 
   const result = await Location.deleteMany({
-    timestamp: { $lt: cutoffDate }
+    'currentLocation.lastUpdated': { $lt: cutoffDate }
   });
 
   logger.info(`Cleaned up ${result.deletedCount} old location records by ${req.user.username}`);

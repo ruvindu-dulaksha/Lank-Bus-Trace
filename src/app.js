@@ -11,6 +11,7 @@ import swaggerUi from 'swagger-ui-express';
 import connectDB from './config/database.js';
 import { swaggerOptions } from './config/swagger.js';
 import logger from './config/logger.js';
+import { initializeDefaultData } from './utils/initializeData.js';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -45,6 +46,11 @@ app.set('trust proxy', 1);
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize default data (admin user, etc.)
+setTimeout(() => {
+  initializeDefaultData();
+}, 2000); // Wait 2 seconds for DB connection
 
 // Security middleware
 app.use(helmet({

@@ -59,7 +59,7 @@ const router = express.Router();
  *       500:
  *         $ref: '#/components/schemas/Error'
  */
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const pricingRules = [
       {
@@ -70,6 +70,30 @@ router.get('/', authenticate, async (req, res) => {
         minimumFare: 100,
         maximumFare: 800,
         busType: 'standard',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '2',
+        routeId: '68e676d44b1fa32c8ada8726',
+        baseFare: 200,
+        distanceRate: 6.0,
+        minimumFare: 120,
+        maximumFare: 1000,
+        busType: 'luxury',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '3',
+        routeId: '68e676d44b1fa32c8ada8727',
+        baseFare: 100,
+        distanceRate: 4.5,
+        minimumFare: 80,
+        maximumFare: 600,
+        busType: 'semi-luxury',
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
