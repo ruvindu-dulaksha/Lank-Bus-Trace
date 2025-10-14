@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
 
 // ===============================
 // 📁 CONFIGURATIONS & UTILITIES
@@ -134,7 +135,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // Static file serving for public assets (CSS, JS, images)
-app.use(express.static('public'));
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // HTTP request logging
 app.use(morgan('combined', { 
