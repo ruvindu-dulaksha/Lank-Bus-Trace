@@ -4,6 +4,7 @@ import Trip from '../models/Trip.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import logger from '../config/logger.js';
+import { sanitizePublicResponse, isAdminOrOperator } from '../utils/responseUtils.js';
 
 /**
  * @desc    Get all buses
@@ -91,9 +92,12 @@ export const getAllBuses = asyncHandler(async (req, res) => {
 
   const total = await Bus.countDocuments(filter);
 
+  // Sanitize response for public users (remove _id and __v)
+  const responseData = isAdminOrOperator(req) ? buses : sanitizePublicResponse(buses);
+
   res.status(200).json({
     success: true,
-    data: buses,
+    data: responseData,
     pagination: {
       currentPage: page,
       totalPages: Math.ceil(total / limit),
@@ -105,11 +109,14 @@ export const getAllBuses = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get single bus
- * @route   GET /api/buses/:id
+ * @route   GET /api/buses/:busNumber
  * @access  Public
  */
 export const getBus = asyncHandler(async (req, res) => {
-  const bus = await Bus.findById(req.params.id)
+  const { busNumber } = req.params;
+
+  // Find bus by busNumber (business identifier) instead of ObjectId
+  const bus = await Bus.findOne({ busNumber: busNumber.toUpperCase() })
     .populate('assignedRoutes')
     .populate('currentTrip')
     .populate({
@@ -122,9 +129,12 @@ export const getBus = asyncHandler(async (req, res) => {
     throw new AppError('Bus not found', 404);
   }
 
+  // Sanitize response for public users (remove _id and __v)
+  const responseData = isAdminOrOperator(req) ? bus : sanitizePublicResponse(bus);
+
   res.status(200).json({
     success: true,
-    data: bus
+    data: responseData
   });
 });
 

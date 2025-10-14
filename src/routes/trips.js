@@ -14,7 +14,8 @@ import {
 import { authenticate, authorize, authorizeOperator } from '../middleware/auth.js';
 import { 
   validateTripCreate,
-  validatePagination 
+  validatePagination,
+  validateTripNumber
 } from '../middleware/validation.js';
 
 const router = express.Router();
@@ -362,20 +363,27 @@ router.get('/live-tracking', authenticate, authorize('admin', 'operator', 'commu
 
 /**
  * @swagger
- * /api/trips/{id}:
+ * /api/trips/{tripNumber}:
  *   get:
- *     summary: Get trip by ID
+ *     summary: Get trip by trip number (Public)
  *     tags: [Trips]
+ *     description: |
+ *       Retrieve trip details using business identifier.
+ *       
+ *       **Security Note:** ObjectIds (_id fields) are automatically removed from public responses for security.
+ *       Only authenticated admin/operator users can see ObjectIds.
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: tripNumber
  *         required: true
  *         schema:
  *           type: string
- *         description: Trip ID
+ *           pattern: '^T\d{6,8}$'
+ *         description: Trip number (format T000001 or T00000001)
+ *         example: T000001
  *     responses:
  *       200:
- *         description: Trip details
+ *         description: Trip details (ObjectIds removed for security)
  *         content:
  *           application/json:
  *             schema:
@@ -383,12 +391,15 @@ router.get('/live-tracking', authenticate, authorize('admin', 'operator', 'commu
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 data:
- *                   $ref: '#/components/schemas/Trip'
+ *                   $ref: '#/components/schemas/TripPublic'
  *       404:
  *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         description: Invalid trip number format
  */
-router.get('/:id', authenticate, getTrip);
+router.get('/:tripNumber', validateTripNumber(), getTrip);
 
 /**
  * @swagger
@@ -421,8 +432,9 @@ router.post('/', authenticate, authorize('admin', 'operator'), validateTripCreat
  * @swagger
  * /api/trips/{id}:
  *   put:
- *     summary: Update trip
+ *     summary: Update trip (Admin/Operator)
  *     tags: [Trips]
+ *     description: Update trip details using MongoDB ObjectId. Requires admin or operator authentication.
  *     security:
  *       - bearerAuth: []
  *       - apiKeyAuth: []
@@ -432,7 +444,8 @@ router.post('/', authenticate, authorize('admin', 'operator'), validateTripCreat
  *         required: true
  *         schema:
  *           type: string
- *         description: Trip ID
+ *         description: MongoDB ObjectId of the trip
+ *         example: 507f1f77bcf86cd799439011
  *     requestBody:
  *       required: true
  *       content:
@@ -442,6 +455,19 @@ router.post('/', authenticate, authorize('admin', 'operator'), validateTripCreat
  *     responses:
  *       200:
  *         description: Trip updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Trip'
+ *                 message:
+ *                   type: string
+ *                   example: "Trip updated successfully"
  *       403:
  *         description: Not authorized to update this trip
  *       404:
@@ -453,8 +479,9 @@ router.put('/:id', authenticate, authorize('admin', 'operator'), updateTrip);
  * @swagger
  * /api/trips/{id}:
  *   delete:
- *     summary: Delete trip
+ *     summary: Delete trip (Admin only)
  *     tags: [Trips]
+ *     description: Delete a trip using MongoDB ObjectId. Requires admin authentication.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -463,14 +490,28 @@ router.put('/:id', authenticate, authorize('admin', 'operator'), updateTrip);
  *         required: true
  *         schema:
  *           type: string
- *         description: Trip ID
+ *         description: MongoDB ObjectId of the trip
+ *         example: 507f1f77bcf86cd799439011
  *     responses:
  *       200:
  *         description: Trip deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Trip deleted successfully"
  *       400:
  *         description: Cannot delete trip that is in progress
  *       404:
  *         $ref: '#/components/responses/NotFound'
+ *       403:
+ *         description: Admin access required
  */
 router.delete('/:id', authenticate, authorize('admin'), deleteTrip);
 
@@ -638,5 +679,4 @@ router.get('/active', validatePagination, async (req, res) => {
 });
 
 // Place parameterized route at the end
-router.get('/:id', authenticate, getTrip);
 export default router;

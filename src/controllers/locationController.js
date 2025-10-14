@@ -2,6 +2,7 @@ import Location from '../models/Location.js';
 import Bus from '../models/Bus.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { sanitizePublicResponse, isAdminOrOperator } from '../utils/responseUtils.js';
 import logger from '../config/logger.js';
 
 /**
@@ -438,136 +439,84 @@ export const getNearbyBuses = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Since there may not be actual location data, let's use a simple approach
-    // First, try to find any locations at all
-    const totalLocations = await Location.countDocuments();
-    
-    if (totalLocations === 0) {
-      return res.status(200).json({
-        success: true,
-        data: [],
-        count: 0,
-        message: 'No location data available yet',
-        searchParams: {
-          latitude: parseFloat(latitude),
-          longitude: parseFloat(longitude),
-          radius: parseInt(radius)
-        }
-      });
-    }
+    // Use the Bus model's findNearbyBuses method
+    const nearbyBuses = await Bus.findNearbyBuses(
+      parseFloat(latitude), 
+      parseFloat(longitude), 
+      parseFloat(radius)
+    )
+    .populate('assignedRoutes.routeId', 'routeNumber routeName origin destination')
+    .limit(parseInt(limit));
 
-    // Get latest locations for each bus (simplified approach)
-    const nearbyLocations = await Location.aggregate([
-      // Get latest location for each bus first
-      { $sort: { busId: 1, timestamp: -1 } },
-      {
-        $group: {
-          _id: '$busId',
-          latestLocation: { $first: '$$ROOT' }
-        }
-      },
-      { $replaceRoot: { newRoot: '$latestLocation' } },
-      
-      // Limit results
-      { $limit: parseInt(limit) },
-      
-      // Populate bus information
-      {
-        $lookup: {
-          from: 'buses',
-          localField: 'busId',
-          foreignField: '_id',
-          as: 'bus',
-          pipeline: [
-            {
-              $project: {
-                busNumber: 1,
-                registrationNumber: 1,
-                'operatorInfo.companyName': 1,
-                assignedRoutes: 1,
-                currentTrip: 1
-              }
-            }
-          ]
-        }
-      },
-      { $unwind: { path: '$bus', preserveNullAndEmptyArrays: true } },
-      
-      // Populate route information
-      {
-        $lookup: {
-          from: 'routes',
-          localField: 'bus.assignedRoutes',
-          foreignField: '_id',
-          as: 'routes',
-          pipeline: [
-            { $project: { routeNumber: 1, routeName: 1, origin: 1, destination: 1 } }
-          ]
-        }
-      },
-      
-      // Add distance calculation (simplified - you'd use proper geospatial for real data)
-      {
-        $addFields: {
-          calculatedDistance: {
-            $multiply: [
-              111000, // Rough meters per degree
-              {
-                $sqrt: {
-                  $add: [
-                    {
-                      $pow: [
-                        { $subtract: ['$currentLocation.coordinates.latitude', parseFloat(latitude)] },
-                        2
-                      ]
-                    },
-                    {
-                      $pow: [
-                        { $subtract: ['$currentLocation.coordinates.longitude', parseFloat(longitude)] },
-                        2
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        }
-      }
-    ]);
+    // Format the response
+    const formattedBuses = nearbyBuses.map(bus => {
+      const baseData = {
+        busNumber: bus.busNumber,
+        registrationNumber: bus.registrationNumber,
+        busType: bus.busType,
+        currentLocation: bus.currentLocation,
+        distance: null, // Would need to calculate if needed
+        assignedRoutes: bus.assignedRoutes,
+        operationalStatus: bus.operationalStatus,
+        lastUpdated: bus.lastLocationUpdate || bus.updatedAt
+      };
+
+      // Add busId based on user role
+      return { ...baseData, busId: bus.busNumber }; // Always use busNumber for public endpoint
+    });
+
+    // Sanitize response for public access (remove ObjectIds from nested data)
+    const responseData = isAdminOrOperator(req) ? formattedBuses : sanitizePublicResponse(formattedBuses);
 
     res.status(200).json({
       success: true,
-      data: nearbyLocations,
-      count: nearbyLocations.length,
+      data: responseData,
+      count: formattedBuses.length,
       searchParams: {
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
-        radius: parseInt(radius)
+        radius: parseFloat(radius)
       },
-      note: 'Basic proximity search - upgrade to GeoJSON format for accurate geospatial queries'
+      message: `Found ${formattedBuses.length} nearby buses`
     });
 
   } catch (error) {
-    // Fallback if aggregation fails
-    console.warn('Geospatial query failed, falling back to simple query:', error.message);
+    console.warn('Nearby buses query failed:', error.message);
     
-    const locations = await Location.find()
-      .populate('busId', 'busNumber registrationNumber')
+    // Fallback: return some buses if geospatial query fails
+    const fallbackBuses = await Bus.find({ operationalStatus: 'active' })
       .limit(parseInt(limit))
-      .sort({ timestamp: -1 });
+      .populate('assignedRoutes.routeId', 'routeNumber routeName origin destination');
+
+    const formattedFallback = fallbackBuses.map(bus => {
+      const baseData = {
+        busNumber: bus.busNumber,
+        registrationNumber: bus.registrationNumber,
+        busType: bus.busType,
+        currentLocation: bus.currentLocation,
+        assignedRoutes: bus.assignedRoutes,
+        operationalStatus: bus.operationalStatus,
+        note: 'Approximate location (geospatial query unavailable)'
+      };
+
+      // Add busId based on user role
+      return { ...baseData, busId: bus.busNumber }; // Always use busNumber for public endpoint
+    });
+
+    // Sanitize response for public access (remove ObjectIds)
+    const responseData = isAdminOrOperator(req) ? formattedFallback : sanitizePublicResponse(formattedFallback);
 
     res.status(200).json({
       success: true,
-      data: locations,
-      count: locations.length,
+      data: responseData,
+      count: formattedFallback.length,
       searchParams: {
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
-        radius: parseInt(radius)
+        radius: parseFloat(radius)
       },
       fallback: true,
-      message: 'Returned recent locations (geospatial search not available)'
+      message: `Returned ${formattedFallback.length} active buses (fallback mode)`
     });
   }
 });
@@ -718,9 +667,12 @@ export const getRealTimeLocations = asyncHandler(async (req, res) => {
   
   const realTimeLocations = await Location.aggregate(pipeline);
   
+  // Sanitize response for public access (remove ObjectIds from bus data)
+  const responseData = isAdminOrOperator(req) ? realTimeLocations : sanitizePublicResponse(realTimeLocations);
+
   res.status(200).json({
     success: true,
-    data: realTimeLocations,
+    data: responseData,
     count: realTimeLocations.length,
     message: 'Real-time locations retrieved successfully'
   });
@@ -848,7 +800,7 @@ export const getLocationHeatmap = asyncHandler(async (req, res) => {
     limit = 1000
   } = req.query;
   
-  // Parse bounds if provided (format: "lat1,lng1,lat2,lng2")
+  // Parse bounds if provided (format: "latitude1,longitude1,latitude2,longitude2")
   let geoFilter = {};
   if (bounds) {
     const [lat1, lng1, lat2, lng2] = bounds.split(',').map(parseFloat);

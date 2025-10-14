@@ -234,14 +234,14 @@ export const liveRouteSearch = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get live bus tracking for a specific route
- * @route   GET /api/routes/:routeId/live-buses
+ * @route   GET /api/routes/:routeNumber/live-buses
  * @access  Public
  */
 export const getLiveBusesOnRoute = asyncHandler(async (req, res) => {
-  const { routeId } = req.params;
+  const { routeNumber } = req.params;
 
   // Get the route
-  const route = await Route.findById(routeId);
+  const route = await Route.findOne({ routeNumber });
   if (!route) {
     throw new AppError('Route not found', 404);
   }
@@ -254,7 +254,7 @@ export const getLiveBusesOnRoute = asyncHandler(async (req, res) => {
 
   // Get all active trips on this route
   const activeTrips = await Trip.find({
-    routeId: routeId,
+    routeId: route._id,
     status: { $in: ['scheduled', 'boarding', 'departed', 'in-transit'] },
     'schedule.plannedDeparture': { $gte: startOfDay, $lte: endOfDay }
   })

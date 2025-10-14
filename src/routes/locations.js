@@ -233,7 +233,7 @@ router.get('/analytics', authenticate, authorize('admin', 'operator'), getLocati
  *         name: bounds
  *         schema:
  *           type: string
- *         description: Bounding box as "lat1,lng1,lat2,lng2"
+ *         description: Bounding box as "latitude1,longitude1,latitude2,longitude2"
  *       - in: query
  *         name: timeRange
  *         schema:

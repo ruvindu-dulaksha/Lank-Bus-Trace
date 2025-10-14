@@ -21,7 +21,8 @@ import { authenticate, authorize } from '../middleware/auth.js';
 import { 
   validateRouteCreate,
   validatePagination,
-  validateRouteSearch
+  validateRouteSearch,
+  validateRouteNumber
 } from '../middleware/validation.js';
 import { conditionalGET, setCacheControl } from '../middleware/conditionalGET.js';
 
@@ -253,22 +254,22 @@ router.get('/live-search', validateRouteSearch, setCacheControl(30), liveRouteSe
 
 /**
  * @swagger
- * /api/routes/{routeId}/live-buses:
+ * /api/routes/{routeNumber}/live-buses:
  *   get:
  *     summary: Get live bus tracking for a specific route
  *     tags: [Routes]
  *     parameters:
  *       - in: path
- *         name: routeId
+ *         name: routeNumber
  *         required: true
  *         schema:
  *           type: string
- *         description: Route ID
+ *         description: Route number (e.g., R001, R0001)
  *     responses:
  *       200:
  *         description: Live buses on route
  */
-router.get('/:routeId/live-buses', setCacheControl(15), getLiveBusesOnRoute); // Very short cache for live data
+router.get('/:routeNumber/live-buses', validateRouteNumber(), setCacheControl(15), getLiveBusesOnRoute); // Very short cache for live data
 
 // Simple price check endpoint - Public access for quick price checking
 router.get('/price-check', setCacheControl(300), getPriceCheck);
@@ -346,7 +347,7 @@ router.get('/province/:province', authenticate, getRoutesByProvince);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get('/:id', getRoute); // Made public for passenger information
+router.get('/:routeNumber', validateRouteNumber(), getRoute); // Made public for passenger information
 
 /**
  * @swagger
@@ -365,7 +366,7 @@ router.get('/:id', getRoute); // Made public for passenger information
  *       200:
  *         description: Route stops information
  */
-router.get('/:id/stops', getRouteStops); // Made public for passenger information
+router.get('/:routeNumber/stops', validateRouteNumber(), getRouteStops); // Made public for passenger information
 
 /**
  * @swagger

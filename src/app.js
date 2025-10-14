@@ -133,6 +133,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Cookie parsing middleware (for authentication)
 app.use(cookieParser());
 
+// Static file serving for public assets (CSS, JS, images)
+app.use(express.static('public'));
+
 // HTTP request logging
 app.use(morgan('combined', { 
   stream: { write: message => logger.info(message.trim()) } 
@@ -172,8 +175,10 @@ app.get('/api-docs.json', (req, res) => {
 // Swagger UI interactive documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "Lanka Bus Trace API - Interactive Documentation",
+  customCssUrl: '/swagger-theme.css',
+  customJs: '/swagger-enhancements.js',
+  customSiteTitle: "🚌 Lanka Bus Trace API - Interactive Documentation",
+  customfavIcon: "/favicon.ico",
   swaggerOptions: {
     url: '/api-docs.json',
     servers: [
@@ -183,7 +188,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
     supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
     tryItOutEnabled: true,
     filter: true,
-    showRequestHeaders: true
+    showRequestHeaders: true,
+    displayRequestDuration: true,
+    docExpansion: 'list',
+    defaultModelsExpandDepth: 1,
+    defaultModelExpandDepth: 1,
+    showExtensions: true,
+    showCommonExtensions: true
   }
 }));
 
@@ -328,10 +339,10 @@ app.get('/', (req, res) => {
     },
     
     developer: {
-      name: 'K.D.R. Dulaksha',
-      studentId: 'COBSCCOMP241P-018',
+      name: 'K.D.Ruvindu Dulaksha',
+      studentId: 'COBSCCOMP4Y241P-018',
       institution: 'Coventry University',
-      project: 'Advanced Software Development Coursework'
+      project: 'Web API Development Coursework'
     },
     
     deployment: {

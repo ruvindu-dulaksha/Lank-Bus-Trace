@@ -25,10 +25,34 @@ export const handleValidationErrors = (req, res, next) => {
 };
 
 // Common validation rules
-export const validateObjectId = (field) => {
+export const validateRouteNumber = (field = 'routeNumber') => {
   return param(field)
-    .isMongoId()
-    .withMessage(`${field} must be a valid MongoDB ObjectId`);
+    .notEmpty()
+    .withMessage(`${field} is required`)
+    .trim()
+    .toUpperCase()
+    .matches(/^R\d{3,4}$/)
+    .withMessage(`${field} must be in format R001 or R0001`);
+};
+
+export const validateBusNumber = (field = 'busNumber') => {
+  return param(field)
+    .notEmpty()
+    .withMessage(`${field} is required`)
+    .trim()
+    .toUpperCase()
+    .matches(/^B\d{3,4}$/)
+    .withMessage(`${field} must be in format B001 or B0001`);
+};
+
+export const validateTripNumber = (field = 'tripNumber') => {
+  return param(field)
+    .notEmpty()
+    .withMessage(`${field} is required`)
+    .trim()
+    .toUpperCase()
+    .matches(/^T\d{6,8}$/)
+    .withMessage(`${field} must be in format T000001 or T00000001`);
 };
 
 export const validatePagination = [

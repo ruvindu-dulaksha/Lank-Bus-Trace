@@ -5,6 +5,7 @@ import Trip from '../models/Trip.js';
 import PricingRule from '../models/PricingRule.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { sanitizePublicResponse, isAdminOrOperator } from '../utils/responseUtils.js';
 import logger from '../config/logger.js';
 
 /**
@@ -113,7 +114,7 @@ export const getAllRoutes = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    data: routes,
+    data: isAdminOrOperator(req) ? routes : sanitizePublicResponse(routes),
     pagination: {
       currentPage: page,
       totalPages: Math.ceil(total / limit),
@@ -125,11 +126,11 @@ export const getAllRoutes = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get single route
- * @route   GET /api/routes/:id
+ * @route   GET /api/routes/:routeNumber
  * @access  Public
  */
 export const getRoute = asyncHandler(async (req, res) => {
-  const route = await Route.findById(req.params.id).lean();
+  const route = await Route.findOne({ routeNumber: req.params.routeNumber }).lean();
 
   if (!route) {
     throw new AppError('Route not found', 404);
@@ -137,31 +138,42 @@ export const getRoute = asyncHandler(async (req, res) => {
 
   // Get assigned buses for this route
   const assignedBuses = await Bus.find({
-    'assignedRoutes.routeId': req.params.id,
+    'assignedRoutes.routeId': route._id,
     'assignedRoutes.isActive': true,
     operationalStatus: 'active'
   }).select('busNumber registrationNumber currentLocation').lean();
 
   // Get active trips for this route
   const activeTrips = await Trip.find({
-    routeId: req.params.id,
+    routeId: route._id,
     status: { $in: ['scheduled', 'in_progress', 'boarding'] }
   })
   .populate('busId', 'busNumber registrationNumber')
   .sort({ 'schedule.departureTime': 1 })
   .lean();
 
+  // Format response based on user role
+  const responseData = {
+    route,
+    stats: {
+      totalBuses: assignedBuses.length,
+      activeTrips: activeTrips.length
+    }
+  };
+
+  if (isAdminOrOperator(req)) {
+    // Admin/operator gets full data with ObjectIds
+    responseData.assignedBuses = assignedBuses;
+    responseData.activeTrips = activeTrips;
+  } else {
+    // Public users get sanitized data
+    responseData.assignedBuses = sanitizePublicResponse(assignedBuses);
+    responseData.activeTrips = sanitizePublicResponse(activeTrips);
+  }
+
   res.status(200).json({
     success: true,
-    data: {
-      route,
-      assignedBuses,
-      activeTrips,
-      stats: {
-        totalBuses: assignedBuses.length,
-        activeTrips: activeTrips.length
-      }
-    }
+    data: responseData
   });
 });
 
@@ -708,17 +720,17 @@ export const searchRoutes = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    data: searchResults
+    data: isAdminOrOperator(req) ? searchResults : sanitizePublicResponse(searchResults)
   });
 });
 
 /**
  * @desc    Get route stops with pricing
- * @route   GET /api/routes/:id/stops
+ * @route   GET /api/routes/:routeNumber/stops
  * @access  Public
  */
 export const getRouteStops = asyncHandler(async (req, res) => {
-  const route = await Route.findById(req.params.id);
+  const route = await Route.findOne({ routeNumber: req.params.routeNumber });
 
   if (!route) {
     throw new AppError('Route not found', 404);
@@ -821,7 +833,7 @@ export const getRoutesByProvince = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    data: routes,
+    data: isAdminOrOperator(req) ? routes : sanitizePublicResponse(routes),
     count: routes.length
   });
 });
@@ -889,11 +901,14 @@ export const getRouteStats = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     data: {
-      route: {
+      route: isAdminOrOperator(req) ? {
         id: route._id,
         routeNumber: route.routeNumber,
         routeName: route.routeName
-      },
+      } : sanitizePublicResponse({
+        routeNumber: route.routeNumber,
+        routeName: route.routeName
+      }),
       stats: {
         activeBuses: busCount,
         tripStats,

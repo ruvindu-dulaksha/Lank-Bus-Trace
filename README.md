@@ -8,7 +8,7 @@
 **✅ 100% Functional Backend System for Sri Lankan Bus Tracking**
 
 ## 👨‍💻 Developer Information
-- **Student Name**: K.D.R. Dulaksha
+- **Student Name**: K.D.Ruvindu Dulaksha
 - **Student ID**: COBSCCOMP4Y241P-018
 - **Institution**: Coventry University
 - **Project**: Real-time Inter-Provincial Bus Tracking System for Sri Lanka

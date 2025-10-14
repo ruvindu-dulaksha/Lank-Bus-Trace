@@ -12,10 +12,10 @@ export const swaggerOptions = {
 ---
 
 ## 👨‍💻 Developer Information
-- **Name**: K.D.R. Dulaksha  
-- **Student ID**: COBSCCOMP241P-018  
+- **Name**: K.D. Ruvindu Dulaksha  
+- **Student ID**: COBSCCOMP4Y241P-018  
 - **Institution**: Coventry University  
-- **Project Type**: Academic Coursework - Advanced Software Development
+- **Project Type**: Academic Coursework - WEB API Development
 
 ---
 
@@ -40,6 +40,16 @@ Advanced search capabilities across cities and transport networks.
 
 ### 📊 Performance Analytics
 Fleet management metrics and operational insights.
+
+---
+
+## 🛡️ Security Features
+
+### 🔒 ObjectId Protection
+**Critical Security Enhancement**: Public API endpoints automatically remove MongoDB ObjectIds (_id fields) from responses to prevent enumeration attacks and database structure exposure. Only authenticated admin/operator users can access full ObjectId data for management purposes.
+
+**Public Endpoints**: Use business identifiers (B001, T000001) and hide ObjectIds
+**Admin/Operator Endpoints**: Retain ObjectIds for internal management operations
 
 ---
 
@@ -73,6 +83,12 @@ curl "https://ruvindu-dulaksha.me/api/routes/search?from=Colombo&to=Kandy"
 
 # Get available cities
 curl https://ruvindu-dulaksha.me/api/routes/cities
+
+# Get bus by business identifier (ObjectIds hidden)
+curl https://ruvindu-dulaksha.me/api/buses/B001
+
+# Get trip by business identifier (ObjectIds hidden)
+curl https://ruvindu-dulaksha.me/api/trips/T000001
 \`\`\`
 
 ### 2. 🔐 Authentication Required
@@ -513,6 +529,60 @@ curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=202
             }
           }
         },
+        BusPublic: {
+          type: 'object',
+          description: 'Bus schema for public endpoints - ObjectIds are automatically removed for security',
+          properties: {
+            registrationNumber: {
+              type: 'string',
+              example: 'NB-1234'
+            },
+            busNumber: {
+              type: 'string',
+              example: 'B001'
+            },
+            operatorName: {
+              type: 'string',
+              example: 'SLTB Colombo'
+            },
+            capacity: {
+              type: 'number',
+              example: 52
+            },
+            busType: {
+              type: 'string',
+              enum: ['standard', 'semi-luxury', 'luxury', 'super-luxury'],
+              example: 'semi-luxury'
+            },
+            features: {
+              type: 'array',
+              items: {
+                type: 'string'
+              },
+              example: ['AC', 'WiFi', 'Charging Points']
+            },
+            isActive: {
+              type: 'boolean',
+              example: true
+            },
+            currentLocation: {
+              type: 'object',
+              properties: {
+                coordinates: {
+                  type: 'object',
+                  properties: {
+                    latitude: { type: 'number', example: 6.9271 },
+                    longitude: { type: 'number', example: 79.8612 }
+                  }
+                },
+                lastUpdated: {
+                  type: 'string',
+                  format: 'date-time'
+                }
+              }
+            }
+          }
+        },
         JourneySearchResult: {
           type: 'object',
           description: 'Smart journey search results showing buses relevant to user travel',
@@ -693,6 +763,77 @@ curl "https://ruvindu-dulaksha.me/api/live-search?from=Colombo&to=Kandy&date=202
                 lastUpdated: {
                   type: 'string',
                   format: 'date-time'
+                }
+              }
+            },
+            isActive: {
+              type: 'boolean',
+              example: true
+            }
+          }
+        },
+        RoutePublic: {
+          type: 'object',
+          description: 'Route schema for public endpoints - ObjectIds are automatically removed for security',
+          properties: {
+            routeNumber: {
+              type: 'string',
+              example: 'R001'
+            },
+            routeName: {
+              type: 'string',
+              example: 'Colombo - Kandy'
+            },
+            origin: {
+              type: 'object',
+              properties: {
+                city: { type: 'string', example: 'Colombo' },
+                terminal: { type: 'string', example: 'Bastian Mawatha' },
+                coordinates: {
+                  type: 'object',
+                  properties: {
+                    latitude: { type: 'number', example: 6.9271 },
+                    longitude: { type: 'number', example: 79.8612 }
+                  }
+                }
+              }
+            },
+            destination: {
+              type: 'object',
+              properties: {
+                city: { type: 'string', example: 'Kandy' },
+                terminal: { type: 'string', example: 'Kandy Bus Terminal' },
+                coordinates: {
+                  type: 'object',
+                  properties: {
+                    latitude: { type: 'number', example: 7.2906 },
+                    longitude: { type: 'number', example: 80.6337 }
+                  }
+                }
+              }
+            },
+            distance: {
+              type: 'number',
+              example: 115.5
+            },
+            estimatedDuration: {
+              type: 'number',
+              example: 180
+            },
+            stops: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', example: 'Kegalle' },
+                  coordinates: {
+                    type: 'object',
+                    properties: {
+                      latitude: { type: 'number', example: 7.2513 },
+                      longitude: { type: 'number', example: 80.3464 }
+                    }
+                  },
+                  estimatedArrival: { type: 'number', example: 90 }
                 }
               }
             },
