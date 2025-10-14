@@ -18,7 +18,9 @@ export const getAllTrips = asyncHandler(async (req, res) => {
     routeId,
     busId,
     date,
-    upcoming
+    upcoming,
+    from,
+    to
   } = req.query;
 
   // Build filter query
@@ -52,6 +54,53 @@ export const getAllTrips = asyncHandler(async (req, res) => {
   if (upcoming === 'true') {
     filter['schedule.departureTime'] = { $gte: new Date() };
     filter.status = { $in: ['scheduled', 'boarding'] };
+  }
+
+  // Handle from/to city search
+  if (from && to) {
+    const routes = await Route.findRoutesBetween(from, to);
+    const routeIds = routes.map(r => r._id);
+
+    if (routeIds.length === 0) {
+      // No routes found, return empty result
+      return res.status(200).json({
+        success: true,
+        data: [],
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: 0,
+          totalItems: 0,
+          itemsPerPage: parseInt(limit),
+          hasNextPage: false,
+          hasPrevPage: false
+        },
+        message: 'No routes found for the specified cities'
+      });
+    }
+
+    if (filter.routeId) {
+      // If routeId is already specified, check if it matches the found routes
+      if (!routeIds.some(rid => rid.equals(filter.routeId))) {
+        // Specified routeId doesn't match from/to, return empty
+        return res.status(200).json({
+          success: true,
+          data: [],
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: 0,
+            totalItems: 0,
+            itemsPerPage: parseInt(limit),
+            hasNextPage: false,
+            hasPrevPage: false
+          },
+          message: 'No routes found matching the specified criteria'
+        });
+      }
+      // Keep the existing routeId filter
+    } else {
+      // Set routeId filter to the found routes
+      filter.routeId = { $in: routeIds };
+    }
   }
 
   const skip = (page - 1) * limit;
