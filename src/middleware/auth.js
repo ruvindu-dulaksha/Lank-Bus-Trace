@@ -157,6 +157,11 @@ export const authorize = (...allowedRoles) => {
 export const authorizeOperator = (resourceType) => {
   return async (req, res, next) => {
     try {
+      // Allow admins full access
+      if (req.user && req.user.role === 'admin') {
+        return next();
+      }
+
       if (!req.user || req.user.role !== 'operator') {
         return res.status(403).json({
           success: false,

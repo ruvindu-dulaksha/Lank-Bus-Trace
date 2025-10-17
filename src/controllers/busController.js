@@ -1,6 +1,7 @@
 import Bus from '../models/Bus.js';
 import Location from '../models/Location.js';
 import Trip from '../models/Trip.js';
+import Route from '../models/Route.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import logger from '../config/logger.js';
@@ -258,38 +259,28 @@ export const updateBusLocation = asyncHandler(async (req, res) => {
 
   const { latitude, longitude, heading, speed, accuracy } = req.body;
 
-  // Create new location record
-  const location = await Location.create({
-    busId: req.params.id,
-    currentLocation: {
-      type: 'Point',
-      coordinates: [longitude, latitude]
+  // Update bus location
+  const updatedBus = await Bus.findByIdAndUpdate(
+    req.params.id,
+    {
+      currentLocation: {
+        type: 'Point',
+        coordinates: [longitude, latitude],
+        speed: speed || 0,
+        heading: heading || 0,
+        lastUpdated: new Date(),
+        isMoving: (speed || 0) > 5
+      }
     },
-    locationMetadata: {
-      accuracy,
-      heading,
-      speed,
-      altitude: req.body.altitude || null
-    },
-    deviceInfo: {
-      deviceId: req.body.deviceId || 'unknown',
-      batteryLevel: req.body.batteryLevel || null,
-      signalStrength: req.body.signalStrength || null
-    }
-  });
-
-  // Update bus with latest location
-  await Bus.findByIdAndUpdate(req.params.id, {
-    currentLocation: {
-      type: 'Point',
-      coordinates: [longitude, latitude]
-    },
-    lastUpdated: new Date()
-  });
+    { new: true, runValidators: true }
+  );
 
   res.status(200).json({
     success: true,
-    data: location,
+    data: {
+      busId: updatedBus._id,
+      currentLocation: updatedBus.currentLocation
+    },
     message: 'Bus location updated successfully'
   });
 });
@@ -574,5 +565,59 @@ export const getRouteCoverage = asyncHandler(async (req, res) => {
       activeTrips: activeTrips.length,
       timestamp: new Date().toISOString()
     }
+  });
+});
+
+/**
+ * @desc    Get single bus by ObjectId (for authenticated users)
+ * @route   GET /api/buses/id/:id
+ * @access  Private (Admin/Operator)
+ */
+export const getBusById = asyncHandler(async (req, res) => {
+  const bus = await Bus.findById(req.params.id)
+    .populate('assignedRoutes')
+    .populate('currentTrip')
+    .populate({
+      path: 'currentLocation',
+      model: 'Location',
+      options: { sort: { timestamp: -1 }, limit: 1 }
+    });
+
+  if (!bus) {
+    throw new AppError('Bus not found', 404);
+  }
+
+  // For authenticated users, return full data including _id
+  res.status(200).json({
+    success: true,
+    data: bus
+  });
+});
+
+/**
+ * @desc    Get single bus by ObjectId (public access)
+ * @route   GET /api/buses/:id
+ * @access  Public
+ */
+export const getBusByObjectId = asyncHandler(async (req, res) => {
+  const bus = await Bus.findById(req.params.id)
+    .populate('assignedRoutes')
+    .populate('currentTrip')
+    .populate({
+      path: 'currentLocation',
+      model: 'Location',
+      options: { sort: { timestamp: -1 }, limit: 1 }
+    });
+
+  if (!bus) {
+    throw new AppError('Bus not found', 404);
+  }
+
+  // For public users, sanitize response (remove _id and __v)
+  const responseData = sanitizePublicResponse(bus);
+
+  res.status(200).json({
+    success: true,
+    data: responseData
   });
 });

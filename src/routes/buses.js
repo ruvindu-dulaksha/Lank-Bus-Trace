@@ -3,6 +3,8 @@ import Bus from '../models/Bus.js';
 import {
   getAllBuses,
   getBus,
+  getBusById,
+  getBusByObjectId,
   createBus,
   updateBus,
   deleteBus,
@@ -15,7 +17,7 @@ import {
   getRouteCoverage,
   findNearbyBuses
 } from '../controllers/busController.js';
-import { authenticate, authorize, authorizeOperator } from '../middleware/auth.js';
+import { authenticate, authorize, authorizeOperator, optionalAuth } from '../middleware/auth.js';
 import { 
   validateBusCreate,
   validateCoordinates,
@@ -90,7 +92,7 @@ const router = express.Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', validatePagination, getAllBuses);
+router.get('/', optionalAuth, validatePagination, getAllBuses);
 
 /**
  * @swagger
@@ -306,27 +308,23 @@ router.get('/active', async (req, res) => {
 
 /**
  * @swagger
- * /api/buses/{busNumber}:
+ * /api/buses/id/{id}:
  *   get:
- *     summary: Get bus by bus number (Public)
+ *     summary: Get bus by ObjectId (Authenticated)
  *     tags: [Buses]
- *     description: |
- *       Retrieve bus details using business identifier.
- *       
- *       **Security Note:** ObjectIds (_id fields) are automatically removed from public responses for security.
- *       Only authenticated admin/operator users can see ObjectIds.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: busNumber
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
- *           pattern: '^B\d{3,4}$'
- *         description: Bus number (format B001 or B0001)
- *         example: B001
+ *         description: MongoDB ObjectId of the bus
+ *         example: 507f1f77bcf86cd799439011
  *     responses:
  *       200:
- *         description: Bus details (ObjectIds removed for security)
+ *         description: Bus details with full ObjectId
  *         content:
  *           application/json:
  *             schema:
@@ -336,13 +334,45 @@ router.get('/active', async (req, res) => {
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   $ref: '#/components/schemas/BusPublic'
+ *                   $ref: '#/components/schemas/Bus'
  *       404:
  *         $ref: '#/components/responses/NotFound'
- *       400:
- *         description: Invalid bus number format
+ *       403:
+ *         description: Authentication required
  */
-router.get('/:busNumber', validateBusNumber(), getBus);
+router.get('/id/:id', authenticate, getBusById);
+
+/**
+ * @swagger
+ * /api/buses/{id}:
+ *   get:
+ *     summary: Get bus by ObjectId
+ *     tags: [Buses]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the bus
+ *         example: 507f1f77bcf86cd799439011
+ *     responses:
+ *       200:
+ *         description: Bus details (public data, sanitized)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Bus'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get('/:id', getBusByObjectId);
 
 /**
  * @swagger

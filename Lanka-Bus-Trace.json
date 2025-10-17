@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Lanka Bus Trace API - Complete Collection",
-    "description": "Comprehensive API collection for Lanka Bus Trace real-time bus tracking system. Includes 40+ working endpoints organized by role-based access control with authentication, validation, and complete examples. Updated October 2025 with 100% functional endpoints.",
+    "description": "Comprehensive API collection for Lanka Bus Trace real-time bus tracking system. Includes 40+ working endpoints organized by role-based access control with authentication, validation, and complete examples. Updated October 2025 with 100% functional endpoints and automated ID/token storage for seamless testing.",
     "version": "2.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -18,7 +18,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000",
+      "value": "https://ruvindu-dulaksha.me",
       "type": "string"
     },
     {
@@ -58,6 +58,36 @@
     },
     {
       "key": "location_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pricing_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "season_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bus_number",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "route_number",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trip_number",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
       "value": "",
       "type": "string"
     }
@@ -290,6 +320,22 @@
         },
         {
           "name": "Generate API Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.apiKey) {",
+                  "        pm.collectionVariables.set('api_key', response.data.apiKey);",
+                  "        console.log('API Key generated and stored');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
@@ -303,6 +349,22 @@
         },
         {
           "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('auth_token', response.data.token);",
+                  "        console.log('Token refreshed and updated');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
@@ -342,7 +404,12 @@
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    if (response.data && response.data.length > 0) {",
-                  "        pm.collectionVariables.set('bus_id', response.data[0]._id);",
+                  "        // For authenticated users, _id will be available",
+                  "        if (response.data[0]._id) {",
+                  "            pm.collectionVariables.set('bus_id', response.data[0]._id);",
+                  "        }",
+                  "        // Also set bus_number for reference",
+                  "        pm.collectionVariables.set('bus_number', response.data[0].busNumber);",
                   "    }",
                   "}"
                 ]
@@ -351,7 +418,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/buses?page=1&limit=10",
               "host": ["{{base_url}}"],
@@ -394,7 +466,25 @@
           "response": []
         },
         {
-          "name": "Get Bus by ID",
+          "name": "Get Bus by ObjectId (Authenticated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/buses/id/{{bus_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "buses", "id", "{{bus_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bus by ObjectId (Public)",
           "request": {
             "method": "GET",
             "header": [],
@@ -474,9 +564,30 @@
         },
         {
           "name": "Create Bus",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.bus && response.data.bus._id) {",
+                  "        pm.collectionVariables.set('bus_id', response.data.bus._id);",
+                  "        pm.collectionVariables.set('bus_number', response.data.bus.busNumber);",
+                  "        console.log('Bus created and ID stored:', response.data.bus._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -500,6 +611,10 @@
             "method": "PUT",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -521,6 +636,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -561,7 +680,12 @@
           "name": "Delete Bus",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/buses/{{bus_id}}",
               "host": ["{{base_url}}"],
@@ -585,7 +709,7 @@
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    if (response.data && response.data.length > 0) {",
-                  "        pm.collectionVariables.set('route_id', response.data[0]._id);",
+                  "        pm.collectionVariables.set('route_id', response.data[0].routeNumber);",
                   "    }",
                   "}"
                 ]
@@ -642,7 +766,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/routes/live-search?from=Colombo&to=Kandy&departureTime=2025-10-12T08:00:00Z",
+              "raw": "{{base_url}}/api/routes/live-search?from=Colombo&to=Kandy&departureTime=morning",
               "host": ["{{base_url}}"],
               "path": ["api", "routes", "live-search"],
               "query": [
@@ -680,7 +804,12 @@
           "name": "Get Route by ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/routes/{{route_id}}",
               "host": ["{{base_url}}"],
@@ -721,7 +850,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/routes/estimate-price?from=Colombo&to=Kandy",
+              "raw": "{{base_url}}/api/routes/estimate-price?origin=Colombo&destination=Kandy",
               "host": ["{{base_url}}"],
               "path": ["api", "routes", "estimate-price"],
               "query": [
@@ -766,9 +895,30 @@
         },
         {
           "name": "Create Route",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.route && response.data.route._id) {",
+                  "        pm.collectionVariables.set('route_id', response.data.route._id);",
+                  "        pm.collectionVariables.set('route_number', response.data.route.routeNumber);",
+                  "        console.log('Route created and ID stored:', response.data.route._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -792,6 +942,10 @@
             "method": "PUT",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -812,7 +966,12 @@
           "name": "Delete Route",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/routes/{{route_id}}",
               "host": ["{{base_url}}"],
@@ -836,7 +995,12 @@
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    if (response.data && response.data.length > 0) {",
-                  "        pm.collectionVariables.set('trip_id', response.data[0]._id);",
+                  "        // For authenticated users, _id will be available",
+                  "        if (response.data[0]._id) {",
+                  "            pm.collectionVariables.set('trip_id', response.data[0]._id);",
+                  "        }",
+                  "        // Also set trip_number for reference",
+                  "        pm.collectionVariables.set('trip_number', response.data[0].tripNumber);",
                   "    }",
                   "}"
                 ]
@@ -845,7 +1009,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/trips?page=1&limit=10",
               "host": ["{{base_url}}"],
@@ -891,7 +1060,12 @@
           "name": "Get Trip by ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/trips/{{trip_id}}",
               "host": ["{{base_url}}"],
@@ -941,9 +1115,30 @@
         },
         {
           "name": "Create Trip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.trip && response.data.trip._id) {",
+                  "        pm.collectionVariables.set('trip_id', response.data.trip._id);",
+                  "        pm.collectionVariables.set('trip_number', response.data.trip.tripNumber);",
+                  "        console.log('Trip created and ID stored:', response.data.trip._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -967,6 +1162,10 @@
             "method": "PUT",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -988,6 +1187,10 @@
           "request": {
             "method": "PATCH",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -1011,6 +1214,10 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -1031,7 +1238,12 @@
           "name": "Delete Trip",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/trips/{{trip_id}}",
               "host": ["{{base_url}}"],
@@ -1055,7 +1267,10 @@
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    if (response.data && response.data.length > 0) {",
-                  "        pm.collectionVariables.set('location_id', response.data[0]._id);",
+                  "        // For authenticated users, _id will be available",
+                  "        if (response.data[0]._id) {",
+                  "            pm.collectionVariables.set('location_id', response.data[0]._id);",
+                  "        }",
                   "    }",
                   "}"
                 ]
@@ -1064,7 +1279,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/locations?page=1&limit=10",
               "host": ["{{base_url}}"],
@@ -1137,7 +1357,12 @@
           "name": "Get Location by ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/locations/{{location_id}}",
               "host": ["{{base_url}}"],
@@ -1150,7 +1375,12 @@
           "name": "Get Location Stats",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/locations/stats",
               "host": ["{{base_url}}"],
@@ -1163,7 +1393,12 @@
           "name": "Get Locations by Bus",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/locations/bus/{{bus_id}}",
               "host": ["{{base_url}}"],
@@ -1174,9 +1409,29 @@
         },
         {
           "name": "Create Location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.location && response.data.location._id) {",
+                  "        pm.collectionVariables.set('location_id', response.data.location._id);",
+                  "        console.log('Location created and ID stored:', response.data.location._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -1198,7 +1453,12 @@
           "name": "Cleanup Old Locations",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/locations/cleanup",
               "host": ["{{base_url}}"],
@@ -1216,7 +1476,12 @@
           "name": "Get All Users",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/users?page=1&limit=10",
               "host": ["{{base_url}}"],
@@ -1252,7 +1517,12 @@
           "name": "Get User by ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/users/{{user_id}}",
               "host": ["{{base_url}}"],
@@ -1266,6 +1536,10 @@
           "request": {
             "method": "PUT",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -1289,6 +1563,10 @@
             "method": "PATCH",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -1309,7 +1587,12 @@
           "name": "Toggle User Status",
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/users/{{user_id}}/toggle",
               "host": ["{{base_url}}"],
@@ -1322,7 +1605,12 @@
           "name": "Delete User",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/users/{{user_id}}",
               "host": ["{{base_url}}"],
@@ -1362,7 +1650,12 @@
           "name": "Driver Profile",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/driver/profile",
               "host": ["{{base_url}}"],
@@ -1375,7 +1668,12 @@
           "name": "Driver Dashboard",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/driver/dashboard",
               "host": ["{{base_url}}"],
@@ -1388,7 +1686,12 @@
           "name": "Driver Trips",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/driver/trips",
               "host": ["{{base_url}}"],
@@ -1401,7 +1704,12 @@
           "name": "Start Trip (Driver)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/driver/trips/{{trip_id}}/start",
               "host": ["{{base_url}}"],
@@ -1414,7 +1722,12 @@
           "name": "Complete Trip (Driver)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/driver/trips/{{trip_id}}/complete",
               "host": ["{{base_url}}"],
@@ -1454,7 +1767,12 @@
           "name": "Operator Profile",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/operator/profile",
               "host": ["{{base_url}}"],
@@ -1467,7 +1785,12 @@
           "name": "Operator Dashboard",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/operator/dashboard",
               "host": ["{{base_url}}"],
@@ -1480,7 +1803,12 @@
           "name": "Operator Fleet",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/operator/fleet",
               "host": ["{{base_url}}"],
@@ -1494,6 +1822,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -1593,7 +1925,12 @@
           "name": "Dashboard Overview",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/dashboard",
               "host": ["{{base_url}}"],
@@ -1606,7 +1943,12 @@
           "name": "Dashboard Stats",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/dashboard/stats",
               "host": ["{{base_url}}"],
@@ -1619,7 +1961,12 @@
           "name": "Performance Analytics",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/analytics/performance?period=7d",
               "host": ["{{base_url}}"],
@@ -1638,7 +1985,12 @@
           "name": "Usage Analytics",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/analytics/usage?period=30d",
               "host": ["{{base_url}}"],
@@ -1657,7 +2009,12 @@
           "name": "General Reports",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/reports?startDate=2025-10-01&endDate=2025-10-12",
               "host": ["{{base_url}}"],
@@ -1680,7 +2037,12 @@
           "name": "Trip Reports",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/reports/trips?startDate=2025-10-01&endDate=2025-10-12",
               "host": ["{{base_url}}"],
@@ -1703,7 +2065,12 @@
           "name": "Revenue Reports",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/reports/revenue?startDate=2025-10-01&endDate=2025-10-12",
               "host": ["{{base_url}}"],
@@ -1726,7 +2093,12 @@
           "name": "Fleet Reports",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/reports/fleet",
               "host": ["{{base_url}}"],
@@ -1806,9 +2178,29 @@
         },
         {
           "name": "Create Pricing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.pricing && response.data.pricing._id) {",
+                  "        pm.collectionVariables.set('pricing_id', response.data.pricing._id);",
+                  "        console.log('Pricing created and ID stored:', response.data.pricing._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -1841,9 +2233,29 @@
         },
         {
           "name": "Create Season",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.season && response.data.season._id) {",
+                  "        pm.collectionVariables.set('season_id', response.data.season._id);",
+                  "        console.log('Season created and ID stored:', response.data.season._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -1873,6 +2285,27 @@
           "// Set dynamic variables if needed",
           "if (!pm.collectionVariables.get('base_url')) {",
           "    pm.collectionVariables.set('base_url', 'https://ruvindu-dulaksha.me');",
+          "}",
+          "",
+          "// Log current request details",
+          "console.log('Making request to:', pm.request.url.getPath());",
+          "console.log('Method:', pm.request.method);",
+          "",
+          "// Log current stored variables",
+          "console.log('Current variables:');",
+          "console.log('- Base URL:', pm.collectionVariables.get('base_url'));",
+          "console.log('- Auth Token:', pm.collectionVariables.get('auth_token') ? 'Present' : 'Not set');",
+          "console.log('- User ID:', pm.collectionVariables.get('user_id') || 'Not set');",
+          "console.log('- Bus ID:', pm.collectionVariables.get('bus_id') || 'Not set');",
+          "console.log('- Route ID:', pm.collectionVariables.get('route_id') || 'Not set');",
+          "console.log('- Trip ID:', pm.collectionVariables.get('trip_id') || 'Not set');",
+          "console.log('- Location ID:', pm.collectionVariables.get('location_id') || 'Not set');",
+          "",
+          "// Auto-set Authorization header if token exists",
+          "const token = pm.collectionVariables.get('auth_token');",
+          "if (token && !pm.request.headers.get('Authorization')) {",
+          "    pm.request.headers.add({key: 'Authorization', value: 'Bearer ' + token});",
+          "    console.log('Auto-added Authorization header');",
           "}"
         ]
       }
@@ -1890,14 +2323,40 @@
           "// Log response time",
           "console.log('Response time:', pm.response.responseTime + 'ms');",
           "",
-          "// Parse response if JSON",
+          "// Parse response if JSON and log key information",
           "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
           "    try {",
           "        const response = pm.response.json();",
-          "        console.log('Response data:', JSON.stringify(response, null, 2));",
+          "        console.log('Response status:', pm.response.code);",
+          "        ",
+          "        // Log stored variables for debugging",
+          "        console.log('Current stored IDs:');",
+          "        console.log('- Auth Token:', pm.collectionVariables.get('auth_token') ? 'Set' : 'Not set');",
+          "        console.log('- User ID:', pm.collectionVariables.get('user_id') || 'Not set');",
+          "        console.log('- Bus ID:', pm.collectionVariables.get('bus_id') || 'Not set');",
+          "        console.log('- Route ID:', pm.collectionVariables.get('route_id') || 'Not set');",
+          "        console.log('- Trip ID:', pm.collectionVariables.get('trip_id') || 'Not set');",
+          "        console.log('- Location ID:', pm.collectionVariables.get('location_id') || 'Not set');",
+          "        ",
+          "        // Log response data structure",
+          "        if (response.data) {",
+          "            console.log('Response contains data:', typeof response.data);",
+          "            if (Array.isArray(response.data) && response.data.length > 0) {",
+          "                console.log('First item keys:', Object.keys(response.data[0]).join(', '));",
+          "            } else if (typeof response.data === 'object') {",
+          "                console.log('Data keys:', Object.keys(response.data).join(', '));",
+          "            }",
+          "        }",
+          "        ",
+          "        console.log('Full response data:', JSON.stringify(response, null, 2));",
           "    } catch (e) {",
-          "        console.log('Could not parse JSON response');",
+          "        console.log('Could not parse JSON response:', e.message);",
           "    }",
+          "}",
+          "",
+          "// Auto-refresh token if expired (401 response)",
+          "if (pm.response.code === 401 && pm.collectionVariables.get('auth_token')) {",
+          "    console.log('Token might be expired, consider refreshing token');",
           "}"
         ]
       }
